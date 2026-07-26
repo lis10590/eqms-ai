@@ -3,6 +3,11 @@ from google import genai
 from google.genai import types
 from pydantic import BaseModel, Field
 from typing import Literal
+from dotenv import load_dotenv
+
+# --- Load Environment Variables ---
+load_dotenv() # This reads the .env file and loads the variables into the system
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
 # 1. Define the strict JSON structure
 class QADeviationAssessment(BaseModel):
@@ -29,7 +34,7 @@ class QADeviationAssessment(BaseModel):
     )
 
 def assess_deviation(deviation_text: str, fmea_criteria_text: str) -> str:
-    client = genai.Client(api_key="AQ.Ab8RN6LlJyxwszBgGTDJy4F0JAqOtlLzQdaQ2bxwWKxvXEFVqQ")
+    client = genai.Client(api_key=GEMINI_API_KEY)
 
     # 2. Updated System Instruction with the new logic
     system_instruction = f"""
@@ -52,19 +57,21 @@ def assess_deviation(deviation_text: str, fmea_criteria_text: str) -> str:
     """
 
     try:
-        response = client.models.generate_content(
-            model='gemini-flash-latest',
-            contents=deviation_text,
-            config=types.GenerateContentConfig(
-                system_instruction=system_instruction,
-                response_mime_type="application/json",
-                response_schema=QADeviationAssessment, 
-                temperature=0.2, 
-            ),
-        )
-        return response.text
+            response = client.models.generate_content(
+                model='gemini-flash-latest',
+                contents=deviation_text,
+                config=types.GenerateContentConfig(
+                    system_instruction=system_instruction,
+                    response_mime_type="application/json",
+                    response_schema=QADeviationAssessment, 
+                    temperature=0.2, 
+                ),
+            )
+          
+            return response.parsed 
     except Exception as e:
-        return f"API Error: {e}"
+        print(f"API Error: {e}")
+        return None
 
 # ==========================================
 # Example Execution Block
