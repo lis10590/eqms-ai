@@ -1,5 +1,6 @@
 import os
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from google import genai
 from google.genai import types
@@ -11,6 +12,7 @@ from dotenv import load_dotenv
 load_dotenv() # This reads the .env file and loads the variables into the system
 
 app = Flask(__name__)
+CORS(app)
 
 # --- Database Configuration ---
 

@@ -29,6 +29,7 @@ export default function DeviationTriage() {
       if (!res.ok) throw new Error("Failed to assess deviation");
 
       const data = await res.json();
+      console.log("Backend Response:", data); // <--- הוספנו את השורה הזו כדי להציץ בנתונים
       setResult(data);
     } catch (error) {
       console.error("Error connecting to API:", error);
@@ -90,7 +91,7 @@ export default function DeviationTriage() {
         </div>
 
         {/* Results Component */}
-        {result && (
+        {result && result.assessment && (
           <div className="bg-white p-6 rounded-lg shadow-sm border border-green-200">
             <h3 className="text-lg font-bold text-green-800 mb-4">
               Assessment Complete
@@ -102,15 +103,15 @@ export default function DeviationTriage() {
                   Category
                 </span>
                 <span className="font-semibold text-gray-900">
-                  {result.root_cause_category}
+                  {result.assessment.root_cause_category}
                 </span>
               </div>
               <div className="bg-gray-50 p-3 rounded border">
                 <span className="block text-xs text-gray-500 uppercase">
-                  Recommended Action
+                  Required Action
                 </span>
                 <span className="font-semibold text-gray-900">
-                  {result.recommended_action}
+                  {result.assessment.required_action}
                 </span>
               </div>
               <div className="bg-red-50 p-3 rounded border border-red-100">
@@ -118,7 +119,7 @@ export default function DeviationTriage() {
                   RPN Score
                 </span>
                 <span className="font-bold text-red-700 text-lg">
-                  {result.rpn}
+                  {result.assessment.rpn}
                 </span>
               </div>
             </div>
@@ -128,7 +129,7 @@ export default function DeviationTriage() {
                 QA Narrative & 5 Whys
               </span>
               <p className="text-gray-600 bg-gray-50 p-4 rounded text-sm whitespace-pre-wrap">
-                {result.qa_narrative}
+                {result.assessment.qa_narrative}
               </p>
             </div>
           </div>
