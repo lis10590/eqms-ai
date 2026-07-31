@@ -1,10 +1,20 @@
-import { useState } from "react";
+"use client";
 
-// Define the properties the modal will accept from the parent component
+import { useState, FormEvent } from "react";
+
+// 1. Define the types for the props your modal accepts
 interface DeviationModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
+}
+
+// 2. Define a rough type for the AI assessment so TypeScript knows what fields exist
+interface AssessmentData {
+  root_cause_category?: string;
+  required_action?: string;
+  rpn?: number;
+  qa_narrative?: string;
 }
 
 export default function DeviationModal({
@@ -12,23 +22,22 @@ export default function DeviationModal({
   onClose,
   onSuccess,
 }: DeviationModalProps) {
-  // State for form inputs and AI results
-  const [submitterId, setSubmitterId] = useState("");
-  const [deviationText, setDeviationText] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<any>(null);
+  const [submitterId, setSubmitterId] = useState<string>("");
+  const [deviationText, setDeviationText] = useState<string>("");
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
-  // If the modal is set to closed, do not render anything
+  // 3. Tell TypeScript that this state will hold AssessmentData or null
+  const [assessment, setAssessment] = useState<AssessmentData | null>(null);
+
   if (!isOpen) return null;
 
-  // Handle the submission of a new deviation
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  // 4. Type the form event
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setLoading(true);
-    setResult(null);
+    setIsLoading(true);
 
     try {
-      const res = await fetch(
+      const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/assess_deviation`,
         {
           method: "POST",
@@ -40,126 +49,155 @@ export default function DeviationModal({
         },
       );
 
-      if (!res.ok) throw new Error("Failed to assess deviation");
-
-      const data = await res.json();
-      setResult(data);
-
-      // Trigger the parent component to refresh the dashboard list
-      onSuccess();
+      if (response.ok) {
+        const result = await response.json();
+        setAssessment(result.assessment);
+      } else {
+        console.error("Failed to assess deviation");
+      }
     } catch (error) {
-      console.error("Error connecting to API:", error);
-      alert("Failed to connect to the eQMS backend.");
+      console.error("Error submitting deviation:", error);
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
-  // Clean up state when closing the modal
-  const handleClose = () => {
-    setResult(null);
-    setDeviationText("");
+  const handleAcknowledge = () => {
+    if (onSuccess) onSuccess();
+
     setSubmitterId("");
+    setDeviationText("");
+    setAssessment(null);
+
+    onClose();
+  };
+
+  const handleCancel = () => {
+    setSubmitterId("");
+    setDeviationText("");
     onClose();
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white p-8 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-semibold text-gray-800">
-            New Deviation Record
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl overflow-hidden">
+        <div className="bg-gray-50 border-b px-6 py-4 flex justify-between items-center">
+          <h2 className="text-xl font-bold text-gray-800">
+            {assessment ? "AI Assessment Complete" : "Log New Deviation"}
           </h2>
           <button
-            onClick={handleClose}
-            className="text-gray-400 hover:text-gray-600 text-xl font-bold"
+            onClick={handleCancel}
+            className="text-gray-400 hover:text-gray-600"
           >
-            &times;
+            ✕
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4 mb-8">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Submitter ID
-            </label>
-            <input
-              type="text"
-              required
-              className="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500 text-black"
-              placeholder="e.g., QA-042"
-              value={submitterId}
-              onChange={(e) => setSubmitterId(e.target.value)}
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Event Description
-            </label>
-            <textarea
-              required
-              rows={4}
-              className="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500 text-black"
-              placeholder="Describe the life sciences non-conformance (e.g., bioreactor pressure drop, sterilization failure...)"
-              value={deviationText}
-              onChange={(e) => setDeviationText(e.target.value)}
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-blue-600 text-white font-medium py-2 px-4 rounded-md hover:bg-blue-700 disabled:opacity-50 transition-colors"
-          >
-            {loading ? "Analyzing Root Cause..." : "Submit for AI Triage"}
-          </button>
-        </form>
-
-        {/* Render AI Assessment Results */}
-        {result && result.assessment && (
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-green-200 mt-6">
-            <h3 className="text-lg font-bold text-green-800 mb-4">
-              Assessment Complete
-            </h3>
-
-            <div className="grid grid-cols-3 gap-4 mb-6">
-              <div className="bg-gray-50 p-3 rounded border">
-                <span className="block text-xs text-gray-500 uppercase">
-                  Category
-                </span>
-                <span className="font-semibold text-gray-900">
-                  {result.assessment.root_cause_category}
-                </span>
+        <div className="p-6">
+          {assessment ? (
+            <div className="space-y-4">
+              <div className="bg-blue-50 border border-blue-200 rounded p-4">
+                <h3 className="font-semibold text-blue-900 mb-2">
+                  Deviation Logged Successfully
+                </h3>
+                <div className="grid grid-cols-2 gap-4 text-sm mb-4">
+                  <div>
+                    <span className="font-semibold text-gray-700">
+                      Category:{" "}
+                    </span>
+                    <span className="text-gray-900">
+                      {assessment.root_cause_category}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="font-semibold text-gray-700">
+                      Action:{" "}
+                    </span>
+                    <span className="text-gray-900">
+                      {assessment.required_action}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="font-semibold text-gray-700">
+                      Calculated RPN:{" "}
+                    </span>
+                    {/* Optional chaining (?) ensures we don't crash if RPN is missing */}
+                    <span
+                      className={`font-bold ${(assessment.rpn ?? 0) > 50 ? "text-red-600" : "text-green-600"}`}
+                    >
+                      {assessment.rpn}
+                    </span>
+                  </div>
+                </div>
+                <div>
+                  <span className="font-semibold text-gray-700 block mb-1">
+                    QA Narrative:
+                  </span>
+                  <p className="text-gray-800 bg-white p-3 border rounded text-sm whitespace-pre-wrap">
+                    {assessment.qa_narrative}
+                  </p>
+                </div>
               </div>
-              <div className="bg-gray-50 p-3 rounded border">
-                <span className="block text-xs text-gray-500 uppercase">
-                  Required Action
-                </span>
-                <span className="font-semibold text-gray-900">
-                  {result.assessment.required_action}
-                </span>
-              </div>
-              <div className="bg-red-50 p-3 rounded border border-red-100">
-                <span className="block text-xs text-red-500 uppercase">
-                  RPN Score
-                </span>
-                <span className="font-bold text-red-700 text-lg">
-                  {result.assessment.rpn}
-                </span>
+
+              <div className="flex justify-end mt-6">
+                <button
+                  onClick={handleAcknowledge}
+                  className="bg-blue-600 text-white font-medium py-2 px-6 rounded hover:bg-blue-700 transition-colors"
+                >
+                  OK
+                </button>
               </div>
             </div>
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Submitter ID
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={submitterId}
+                  onChange={(e) => setSubmitterId(e.target.value)}
+                  className="w-full border border-gray-300 rounded p-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="e.g., QA-019"
+                />
+              </div>
 
-            <div>
-              <span className="block text-sm font-medium text-gray-700 mb-2">
-                QA Narrative & 5 Whys
-              </span>
-              <p className="text-gray-600 bg-gray-50 p-4 rounded text-sm whitespace-pre-wrap">
-                {result.assessment.qa_narrative}
-              </p>
-            </div>
-          </div>
-        )}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Deviation Text
+                </label>
+                <textarea
+                  required
+                  rows={5}
+                  value={deviationText}
+                  onChange={(e) => setDeviationText(e.target.value)}
+                  className="w-full border border-gray-300 rounded p-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Describe the non-conformance event..."
+                />
+              </div>
+
+              <div className="flex justify-end space-x-3 pt-4">
+                <button
+                  type="button"
+                  onClick={handleCancel}
+                  disabled={isLoading}
+                  className="px-4 py-2 text-gray-700 border border-gray-300 rounded hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 disabled:opacity-50 flex items-center"
+                >
+                  {isLoading ? "Assessing..." : "Submit to AI Engine"}
+                </button>
+              </div>
+            </form>
+          )}
+        </div>
       </div>
     </div>
   );

@@ -133,27 +133,45 @@ def assess_deviation_route():
 
 @app.route('/deviations', methods=['GET'])
 def get_deviations():
-    try:
-        # Query all deviations, ordered by newest first using your timestamp field
-        deviations_query = Deviation.query.order_by(Deviation.timestamp.desc()).all()
-        
-        # Convert the SQLAlchemy objects to dictionaries for JSON serialization
-        deviations_list = []
-        for dev in deviations_query:
-            deviations_list.append({
-                "id": dev.id,
-                "submitter_id": dev.submitter_id,
-                "root_cause_category": dev.root_cause_category,
-                "rpn": dev.rpn,
-                # Map 'timestamp' from your DB to 'created_at' so the React table reads it correctly
-                "created_at": dev.timestamp.strftime("%Y-%m-%d %H:%M") if dev.timestamp else None 
-            })
+    deviations = Deviation.query.order_by(Deviation.id.asc()).all()
+    result = []
+    for dev in deviations:
+        result.append({
+            "id": dev.id,
+            "submitter_id": dev.submitter_id,
+            "root_cause_category": dev.root_cause_category, 
+            "rpn": dev.rpn,
+            "created_at": dev.timestamp.isoformat(),
             
-        return jsonify(deviations_list), 200
+            
+            # Add these missing fields to your JSON response!
+            "deviation_text": dev.original_deviation_text,
+            "required_action": dev.required_action,
+            "qa_narrative": dev.qa_narrative 
+        })
+    return jsonify(result), 200
+#edit deviation
+@app.route('/deviations/<int:id>', methods=['PUT'])
+def update_deviation(id):
+    data = request.json
+    
+    # 1. Query your PostgreSQL database for the deviation by ID
+    deviation = Deviation.query.get(id)
+    
+    # Always good practice to handle the case where the ID doesn't exist
+    if not deviation:
+        return jsonify({"error": "Deviation not found"}), 404
         
-    except Exception as e:
-        print(f"Error fetching deviations: {e}")
-        return jsonify({"error": "Failed to fetch deviations"}), 500
+    # 2. Update the fields
+    # Using data.get() safely updates the field if it was provided in the request, 
+    # but keeps the existing database value if it wasn't.
+    deviation.submitter_id = data.get('submitter_id', deviation.submitter_id)
+    deviation.original_deviation_text = data.get('deviation_text', deviation.original_deviation_text)
+    
+    # 3. Commit the changes to PostgreSQL
+    db.session.commit()
+    
+    return jsonify({"message": "Deviation updated successfully"}), 200
     
 # Create tables if they don't exist
 with app.app_context():

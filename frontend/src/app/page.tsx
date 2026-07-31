@@ -1,15 +1,18 @@
 "use client";
 
 import { useState, useEffect } from "react";
-// Import the newly created modal component
 import DeviationModal from "../components/DeviationModal";
+import DeviationDetailsModal from "../components/DeviationDetailsModal";
+import { formatDateTime } from "../utils/functions";
 
 export default function Dashboard() {
-  // State for the dashboard table and modal visibility
   const [deviations, setDeviations] = useState<any[]>([]);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isNewModalOpen, setIsNewModalOpen] = useState(false);
 
-  // Function to fetch all deviations from the backend
+  // New state for viewing/editing
+  const [selectedDeviation, setSelectedDeviation] = useState<any | null>(null);
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+
   const fetchDeviations = async () => {
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/deviations`);
@@ -22,28 +25,32 @@ export default function Dashboard() {
     }
   };
 
-  // Fetch data when the component mounts
   useEffect(() => {
     fetchDeviations();
   }, []);
 
+  // Handler for clicking a row
+  const handleRowClick = (deviation: any) => {
+    setSelectedDeviation(deviation);
+    setIsDetailsModalOpen(true);
+  };
+
   return (
     <main className="min-h-screen bg-gray-50 p-8">
       <div className="max-w-6xl mx-auto">
-        {/* Header Section */}
         <div className="flex justify-between items-center mb-8 border-b pb-4">
           <h1 className="text-3xl font-bold text-gray-900">eQMS Dashboard</h1>
           <button
-            onClick={() => setIsModalOpen(true)}
+            onClick={() => setIsNewModalOpen(true)}
             className="bg-blue-600 text-white font-medium py-2 px-6 rounded-md hover:bg-blue-700 transition-colors shadow-sm"
           >
             + Open New Deviation
           </button>
         </div>
 
-        {/* Deviations Data Table */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
           <table className="min-w-full divide-y divide-gray-200">
+            {/* ... Your existing thead ... */}
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -77,7 +84,9 @@ export default function Dashboard() {
                 deviations.map((dev: any, index: number) => (
                   <tr
                     key={index}
-                    className="hover:bg-gray-50 transition-colors"
+                    // Add pointer cursor and onClick handler here
+                    className="hover:bg-gray-50 transition-colors cursor-pointer"
+                    onClick={() => handleRowClick(dev)}
                   >
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                       {dev.id || `DEV-${index + 1}`}
@@ -96,7 +105,7 @@ export default function Dashboard() {
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {dev.created_at || "Just now"}
+                      {formatDateTime(dev.created_at)}
                     </td>
                   </tr>
                 ))
@@ -105,12 +114,22 @@ export default function Dashboard() {
           </table>
         </div>
 
-        {/* Render the modal component conditionally based on state */}
+        {/* Existing Modal for New Deviations */}
         <DeviationModal
-          isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
-          onSuccess={fetchDeviations} // Passes the fetch function so the modal can refresh the table
+          isOpen={isNewModalOpen}
+          onClose={() => setIsNewModalOpen(false)}
+          onSuccess={fetchDeviations}
         />
+
+        {/* New Modal for Viewing/Editing */}
+        {selectedDeviation && (
+          <DeviationDetailsModal
+            isOpen={isDetailsModalOpen}
+            onClose={() => setIsDetailsModalOpen(false)}
+            deviation={selectedDeviation}
+            onSuccess={fetchDeviations}
+          />
+        )}
       </div>
     </main>
   );
