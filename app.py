@@ -130,6 +130,30 @@ def assess_deviation_route():
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
+
+@app.route('/deviations', methods=['GET'])
+def get_deviations():
+    try:
+        # Query all deviations, ordered by newest first using your timestamp field
+        deviations_query = Deviation.query.order_by(Deviation.timestamp.desc()).all()
+        
+        # Convert the SQLAlchemy objects to dictionaries for JSON serialization
+        deviations_list = []
+        for dev in deviations_query:
+            deviations_list.append({
+                "id": dev.id,
+                "submitter_id": dev.submitter_id,
+                "root_cause_category": dev.root_cause_category,
+                "rpn": dev.rpn,
+                # Map 'timestamp' from your DB to 'created_at' so the React table reads it correctly
+                "created_at": dev.timestamp.strftime("%Y-%m-%d %H:%M") if dev.timestamp else None 
+            })
+            
+        return jsonify(deviations_list), 200
+        
+    except Exception as e:
+        print(f"Error fetching deviations: {e}")
+        return jsonify({"error": "Failed to fetch deviations"}), 500
     
 # Create tables if they don't exist
 with app.app_context():

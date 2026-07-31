@@ -1,139 +1,116 @@
 "use client";
 
-import { useState, FormEvent } from "react";
+import { useState, useEffect } from "react";
+// Import the newly created modal component
+import DeviationModal from "../components/DeviationModal";
 
-export default function DeviationTriage() {
-  const [submitterId, setSubmitterId] = useState("");
-  const [deviationText, setDeviationText] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<any>(null);
+export default function Dashboard() {
+  // State for the dashboard table and modal visibility
+  const [deviations, setDeviations] = useState<any[]>([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setLoading(true);
-    setResult(null);
-
+  // Function to fetch all deviations from the backend
+  const fetchDeviations = async () => {
     try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/assess_deviation`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            submitter_id: submitterId,
-            deviation_text: deviationText,
-          }),
-        },
-      );
-
-      if (!res.ok) throw new Error("Failed to assess deviation");
-
-      const data = await res.json();
-      console.log("Backend Response:", data); // <--- הוספנו את השורה הזו כדי להציץ בנתונים
-      setResult(data);
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/deviations`);
+      if (res.ok) {
+        const data = await res.json();
+        setDeviations(data);
+      }
     } catch (error) {
-      console.error("Error connecting to API:", error);
-      alert("Failed to connect to the eQMS backend.");
-    } finally {
-      setLoading(false);
+      console.error("Error fetching deviations:", error);
     }
   };
 
+  // Fetch data when the component mounts
+  useEffect(() => {
+    fetchDeviations();
+  }, []);
+
   return (
     <main className="min-h-screen bg-gray-50 p-8">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold text-gray-900 mb-8 border-b pb-4">
-          Quality Management System
-        </h1>
-
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-8">
-          <h2 className="text-xl font-semibold mb-4 text-gray-800">
-            New Deviation Record
-          </h2>
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Submitter ID
-              </label>
-              <input
-                type="text"
-                required
-                className="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500 text-black"
-                placeholder="e.g., QA-042"
-                value={submitterId}
-                onChange={(e) => setSubmitterId(e.target.value)}
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Event Description
-              </label>
-              <textarea
-                required
-                rows={4}
-                className="w-full border border-gray-300 rounded-md p-2 focus:ring-blue-500 focus:border-blue-500 text-black"
-                placeholder="Describe the life sciences non-conformance (e.g., incubator temperature excursion, calibration failure...)"
-                value={deviationText}
-                onChange={(e) => setDeviationText(e.target.value)}
-              />
-            </div>
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-blue-600 text-white font-medium py-2 px-4 rounded-md hover:bg-blue-700 disabled:opacity-50 transition-colors"
-            >
-              {loading ? "Analyzing Root Cause..." : "Submit for AI Triage"}
-            </button>
-          </form>
+      <div className="max-w-6xl mx-auto">
+        {/* Header Section */}
+        <div className="flex justify-between items-center mb-8 border-b pb-4">
+          <h1 className="text-3xl font-bold text-gray-900">eQMS Dashboard</h1>
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="bg-blue-600 text-white font-medium py-2 px-6 rounded-md hover:bg-blue-700 transition-colors shadow-sm"
+          >
+            + Open New Deviation
+          </button>
         </div>
 
-        {/* Results Component */}
-        {result && result.assessment && (
-          <div className="bg-white p-6 rounded-lg shadow-sm border border-green-200">
-            <h3 className="text-lg font-bold text-green-800 mb-4">
-              Assessment Complete
-            </h3>
-
-            <div className="grid grid-cols-3 gap-4 mb-6">
-              <div className="bg-gray-50 p-3 rounded border">
-                <span className="block text-xs text-gray-500 uppercase">
+        {/* Deviations Data Table */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  ID
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Submitter
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Category
-                </span>
-                <span className="font-semibold text-gray-900">
-                  {result.assessment.root_cause_category}
-                </span>
-              </div>
-              <div className="bg-gray-50 p-3 rounded border">
-                <span className="block text-xs text-gray-500 uppercase">
-                  Required Action
-                </span>
-                <span className="font-semibold text-gray-900">
-                  {result.assessment.required_action}
-                </span>
-              </div>
-              <div className="bg-red-50 p-3 rounded border border-red-100">
-                <span className="block text-xs text-red-500 uppercase">
-                  RPN Score
-                </span>
-                <span className="font-bold text-red-700 text-lg">
-                  {result.assessment.rpn}
-                </span>
-              </div>
-            </div>
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  RPN
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Date
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {deviations.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={5}
+                    className="px-6 py-12 text-center text-gray-500"
+                  >
+                    No deviations found. Click the button above to create one.
+                  </td>
+                </tr>
+              ) : (
+                deviations.map((dev: any, index: number) => (
+                  <tr
+                    key={index}
+                    className="hover:bg-gray-50 transition-colors"
+                  >
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      {dev.id || `DEV-${index + 1}`}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {dev.submitter_id}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {dev.category || dev.root_cause_category}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <span
+                        className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${dev.rpn > 50 ? "bg-red-100 text-red-800" : "bg-green-100 text-green-800"}`}
+                      >
+                        {dev.rpn}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {dev.created_at || "Just now"}
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
 
-            <div>
-              <span className="block text-sm font-medium text-gray-700 mb-2">
-                QA Narrative & 5 Whys
-              </span>
-              <p className="text-gray-600 bg-gray-50 p-4 rounded text-sm whitespace-pre-wrap">
-                {result.assessment.qa_narrative}
-              </p>
-            </div>
-          </div>
-        )}
+        {/* Render the modal component conditionally based on state */}
+        <DeviationModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          onSuccess={fetchDeviations} // Passes the fetch function so the modal can refresh the table
+        />
       </div>
     </main>
   );
