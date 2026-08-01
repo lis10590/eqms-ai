@@ -1,136 +1,91 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import DeviationModal from "../components/DeviationModal";
-import DeviationDetailsModal from "../components/DeviationDetailsModal";
-import { formatDateTime } from "../utils/functions";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 
-export default function Dashboard() {
-  const [deviations, setDeviations] = useState<any[]>([]);
-  const [isNewModalOpen, setIsNewModalOpen] = useState(false);
+export default function LoginPage() {
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const router = useRouter();
 
-  // New state for viewing/editing
-  const [selectedDeviation, setSelectedDeviation] = useState<any | null>(null);
-  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
 
-  const fetchDeviations = async () => {
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/deviations`);
-      if (res.ok) {
-        const data = await res.json();
-        setDeviations(data);
+      // Replace with your actual Flask backend URL if different
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ username, password }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Login failed");
       }
-    } catch (error) {
-      console.error("Error fetching deviations:", error);
+
+      // Save the JWT and user role to localStorage
+      localStorage.setItem("token", data.access_token);
+      localStorage.setItem("role", data.role);
+
+      // Redirect to the main eQMS dashboard
+      router.push("/deviations");
+    } catch (err: any) {
+      setError(err.message);
     }
   };
 
-  useEffect(() => {
-    fetchDeviations();
-  }, []);
-
-  // Handler for clicking a row
-  const handleRowClick = (deviation: any) => {
-    setSelectedDeviation(deviation);
-    setIsDetailsModalOpen(true);
-  };
-
   return (
-    <main className="min-h-screen bg-gray-50 p-8">
-      <div className="max-w-6xl mx-auto">
-        <div className="flex justify-between items-center mb-8 border-b pb-4">
-          <h1 className="text-3xl font-bold text-gray-900">eQMS Dashboard</h1>
-          <button
-            onClick={() => setIsNewModalOpen(true)}
-            className="bg-blue-600 text-white font-medium py-2 px-6 rounded-md hover:bg-blue-700 transition-colors shadow-sm"
-          >
-            + Open New Deviation
-          </button>
-        </div>
+    <div className="flex min-h-screen items-center justify-center bg-gray-50">
+      <div className="w-full max-w-md p-8 space-y-6 bg-white rounded-lg shadow-md">
+        <h2 className="text-2xl font-bold text-center text-gray-900">
+          eQMS Login
+        </h2>
 
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-          <table className="min-w-full divide-y divide-gray-200">
-            {/* ... Your existing thead ... */}
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  ID
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Submitter
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Category
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  RPN
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Date
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {deviations.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={5}
-                    className="px-6 py-12 text-center text-gray-500"
-                  >
-                    No deviations found. Click the button above to create one.
-                  </td>
-                </tr>
-              ) : (
-                deviations.map((dev: any, index: number) => (
-                  <tr
-                    key={index}
-                    // Add pointer cursor and onClick handler here
-                    className="hover:bg-gray-50 transition-colors cursor-pointer"
-                    onClick={() => handleRowClick(dev)}
-                  >
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {dev.id || `DEV-${index + 1}`}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {dev.submitter_id}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {dev.category || dev.root_cause_category}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      <span
-                        className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${dev.rpn > 50 ? "bg-red-100 text-red-800" : "bg-green-100 text-green-800"}`}
-                      >
-                        {dev.rpn}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {formatDateTime(dev.created_at)}
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Existing Modal for New Deviations */}
-        <DeviationModal
-          isOpen={isNewModalOpen}
-          onClose={() => setIsNewModalOpen(false)}
-          onSuccess={fetchDeviations}
-        />
-
-        {/* New Modal for Viewing/Editing */}
-        {selectedDeviation && (
-          <DeviationDetailsModal
-            isOpen={isDetailsModalOpen}
-            onClose={() => setIsDetailsModalOpen(false)}
-            deviation={selectedDeviation}
-            onSuccess={fetchDeviations}
-          />
+        {error && (
+          <div className="p-3 text-sm text-red-700 bg-red-100 rounded">
+            {error}
+          </div>
         )}
+
+        <form onSubmit={handleLogin} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Username
+            </label>
+            <input
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              className="w-full p-2 mt-1 border rounded-md focus:ring-blue-500 focus:border-blue-500"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Password
+            </label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full p-2 mt-1 border rounded-md focus:ring-blue-500 focus:border-blue-500"
+              required
+            />
+          </div>
+          <button
+            type="submit"
+            className="w-full py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700"
+          >
+            Sign In
+          </button>
+        </form>
       </div>
-    </main>
+    </div>
   );
 }

@@ -1,15 +1,14 @@
 "use client";
 
 import { useState, FormEvent } from "react";
+import { useRouter } from "next/navigation";
 
-// 1. Define the types for the props your modal accepts
 interface DeviationModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
 }
 
-// 2. Define a rough type for the AI assessment so TypeScript knows what fields exist
 interface AssessmentData {
   root_cause_category?: string;
   required_action?: string;
@@ -22,26 +21,29 @@ export default function DeviationModal({
   onClose,
   onSuccess,
 }: DeviationModalProps) {
+  const router = useRouter();
   const [submitterId, setSubmitterId] = useState<string>("");
   const [deviationText, setDeviationText] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
-
-  // 3. Tell TypeScript that this state will hold AssessmentData or null
   const [assessment, setAssessment] = useState<AssessmentData | null>(null);
 
   if (!isOpen) return null;
 
-  // 4. Type the form event
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
+      const token = localStorage.getItem("token");
+
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/assess_deviation`,
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`, // Attach the JWT
+          },
           body: JSON.stringify({
             submitter_id: submitterId,
             deviation_text: deviationText,
@@ -52,6 +54,10 @@ export default function DeviationModal({
       if (response.ok) {
         const result = await response.json();
         setAssessment(result.assessment);
+      } else if (response.status === 401) {
+        // Handle expired or invalid token
+        localStorage.removeItem("token");
+        router.push("/");
       } else {
         console.error("Failed to assess deviation");
       }
@@ -121,7 +127,6 @@ export default function DeviationModal({
                     <span className="font-semibold text-gray-700">
                       Calculated RPN:{" "}
                     </span>
-                    {/* Optional chaining (?) ensures we don't crash if RPN is missing */}
                     <span
                       className={`font-bold ${(assessment.rpn ?? 0) > 50 ? "text-red-600" : "text-green-600"}`}
                     >

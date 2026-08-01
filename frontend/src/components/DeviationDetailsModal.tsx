@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, FormEvent } from "react";
+import { useRouter } from "next/navigation";
 
 interface DeviationDetailsModalProps {
   isOpen: boolean;
@@ -15,6 +16,7 @@ export default function DeviationDetailsModal({
   deviation,
   onSuccess,
 }: DeviationDetailsModalProps) {
+  const router = useRouter();
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -43,12 +45,16 @@ export default function DeviationDetailsModal({
     setIsLoading(true);
 
     try {
-      // Note: You will need a PUT endpoint in Flask mapped to /deviations/<id>
+      const token = localStorage.getItem("token");
+
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/deviations/${deviation.id}`,
         {
           method: "PUT",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`, // Attach the JWT
+          },
           body: JSON.stringify(editData),
         },
       );
@@ -57,6 +63,10 @@ export default function DeviationDetailsModal({
         setIsEditing(false);
         onSuccess(); // Refresh the table
         onClose(); // Close the modal
+      } else if (response.status === 401) {
+        // Handle expired or invalid token
+        localStorage.removeItem("token");
+        router.push("/");
       } else {
         console.error("Failed to update deviation");
       }
@@ -95,7 +105,7 @@ export default function DeviationDetailsModal({
 
         {/* Body - Scrollable */}
         <div className="p-6 overflow-y-auto">
-          {/* AI Assessment Readout (Usually non-editable directly in an eQMS) */}
+          {/* AI Assessment Readout */}
           <div className="bg-blue-50 border border-blue-200 rounded p-4 mb-6">
             <h3 className="font-semibold text-blue-900 mb-2">
               AI Triage Results
