@@ -42,3 +42,33 @@ class AuditLog(db.Model):
     table_affected = db.Column(db.String(50), nullable=False)
     record_id = db.Column(db.Integer, nullable=False)
     details = db.Column(db.Text, nullable=True)
+
+class ChangeControl(db.Model):
+    __tablename__ = 'change_controls'
+
+    id = db.Column(db.Integer, primary_key=True)
+    initiator_id = db.Column(db.String(100), nullable=False)
+    created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
+
+    # Core Data
+    title = db.Column(db.String(200), nullable=False)
+    current_state = db.Column(db.Text, nullable=False)
+    proposed_state = db.Column(db.Text, nullable=False)
+    justification = db.Column(db.Text, nullable=False)
+
+    # AI Evaluation & QA Triage
+    classification = db.Column(db.String(50)) # Minor, Major, Critical
+    ai_impact_summary = db.Column(db.Text)
+    status = db.Column(db.String(50), default='Draft') # Draft, In Review, Approved, Closed
+
+    # Relationships
+    tasks = db.relationship('ChangeTask', backref='change_control', lazy=True, cascade="all, delete-orphan")
+
+class ChangeTask(db.Model):
+    __tablename__ = 'change_tasks'
+
+    id = db.Column(db.Integer, primary_key=True)
+    change_control_id = db.Column(db.Integer, db.ForeignKey('change_controls.id'), nullable=False)
+    task_description = db.Column(db.Text, nullable=False)
+    domain = db.Column(db.String(100)) # e.g., Documentation, Validation, Training
+    is_completed = db.Column(db.Boolean, default=False)

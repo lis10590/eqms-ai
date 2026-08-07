@@ -6,10 +6,13 @@ from typing import Literal
 from dotenv import load_dotenv
 
 # --- Load Environment Variables ---
-load_dotenv() # This reads the .env file and loads the variables into the system
+load_dotenv()
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
-# 1. Define the strict JSON structure
+# ==========================================
+# 1. DEVIATION MODULE
+# ==========================================
+
 class QADeviationAssessment(BaseModel):
     Failure_Mode: str = Field(description="Short description of what went wrong.")
     Root_Cause_Category: Literal["Human Error", "Equipment Failure", "Process/Procedure", "Materials"] = Field(
@@ -20,23 +23,18 @@ class QADeviationAssessment(BaseModel):
     Occurrence: int = Field(description="Score based on FMEA criteria.")
     Detection: int = Field(description="Score based on FMEA criteria.")
     RPN: int = Field(description="Risk Priority Number (Severity * Occurrence * Detection).")
-    
-    # --- NEW: Strict categorical decision for the eQMS workflow ---
     Required_Action: Literal["Close Deviation", "Open Investigation", "Initiate CAPA"] = Field(
         description="The definitive next step required based on the assessment."
     )
-    
     Recommended_Action: str = Field(description="Specific recommendation for the correction, investigation focus, or CAPA plan.")
     Justification: str = Field(description="Explanation for the FMEA scoring.")
-    
     QA_Narrative_Summary: str = Field(
         description="A cohesive, professional QA assessment paragraph summarizing the event, root cause, risk level, and justifying the Required Action."
     )
 
-def assess_deviation(deviation_text: str, fmea_criteria_text: str) -> str:
+def assess_deviation(deviation_text: str, fmea_criteria_text: str):
     client = genai.Client(api_key=GEMINI_API_KEY)
-
-    # 2. Updated System Instruction with the new logic
+    
     system_instruction = f"""
     You are an expert Quality Assurance Specialist evaluating a deviation report.
     
@@ -57,41 +55,83 @@ def assess_deviation(deviation_text: str, fmea_criteria_text: str) -> str:
     """
 
     try:
-            response = client.models.generate_content(
-                model='gemini-flash-latest',
-                contents=deviation_text,
-                config=types.GenerateContentConfig(
-                    system_instruction=system_instruction,
-                    response_mime_type="application/json",
-                    response_schema=QADeviationAssessment, 
-                    temperature=0.2, 
-                ),
-            )
-          
-            return response.parsed 
+        response = client.models.generate_content(
+            model='gemini-flash-latest',
+            contents=deviation_text,
+            config=types.GenerateContentConfig(
+                system_instruction=system_instruction,
+                response_mime_type="application/json",
+                response_schema=QADeviationAssessment, 
+                temperature=0.2, 
+            ),
+        )
+        return response.parsed 
     except Exception as e:
         print(f"API Error: {e}")
         return None
 
 # ==========================================
-# Example Execution Block
+# 2. CHANGE CONTROL MODULE
 # ==========================================
-if __name__ == "__main__":
-    sample_deviation = """
-    Deviation Report: 
-    During routine morning monitoring, the temperature in CO2 Incubator #3 (used for expanding cell cultures) 
-    was recorded at 36.1°C, which is below the acceptable range of 37.0°C ± 0.5°C. The temperature drop 
-    lasted for approximately 45 minutes before returning to normal parameters. The incubator door was found 
-    slightly ajar. Standard daily checks are in place, and an automated continuous monitoring alarm system 
-    is active but was delayed in notifying the staff.
+
+# Sub-model for tasks to keep the JSON output strictly structured
+class ChangeTaskSchema(BaseModel):
+    Domain: Literal["Documentation", "Validation", "Training", "Regulatory", "Engineering", "General"] = Field(
+        description="The department or category this task belongs to."
+    )
+    Task_Description: str = Field(description="A clear, actionable task required to implement this change safely.")
+
+# Main schema for the Change Control Assessment
+class QAChangeControlAssessment(BaseModel):
+    Enhanced_Description: str = Field(
+        description="A professionally formatted, audit-ready summary of the proposed change, clearly defining Current State vs. Proposed State."
+    )
+    Classification: Literal["Minor", "Major", "Critical"] = Field(
+        description="Risk level based on quality, process, and compliance impact."
+    )
+    Classification_Rationale: str = Field(
+        description="Brief explanation of why this risk level was chosen, specifically mentioning regulatory or product impact."
+    )
+    Impact_Areas: list[str] = Field(
+        description="List of specific areas affected (e.g., specific SOPs, Equipment, Environmental Monitoring, eQMS systems)."
+    )
+    Suggested_Tasks: list[ChangeTaskSchema] = Field(
+        description="List of actionable tasks required before the change can be closed and verified."
+    )
+
+def assess_change_control(title: str, current_state: str, proposed_state: str, justification: str):
+    client = genai.Client(api_key=GEMINI_API_KEY)
+    
+    system_instruction = """
+    You are an expert Quality Assurance AI assisting in a biotechnology and advanced biotherapy environment. 
+    Evaluate the following Change Control draft. 
+    
+    Your task is to:
+    1. Refine the user's raw input into a clear, audit-ready technical description.
+    2. Assess potential risks regarding cleanroom integrity, international compliance standards (such as ISO 14644-1 and EU GMP Annex 1), and overall product quality.
+    3. Categorize the change as Minor, Major, or Critical based on GxP impact.
+    4. Generate a comprehensive list of actionable execution tasks to ensure compliance (e.g., SOP revisions, equipment re-qualification, personnel training).
     """
 
-    sample_fmea_criteria = """
-    Severity: 1=Negligible, 2=Minor, 3=Moderate, 4=Major (impacts product quality/viability), 5=Critical.
-    Occurrence: 1=Rare, 2=Unlikely, 3=Possible (isolated incidents), 4=Likely, 5=Almost Certain.
-    Detection: 1=Immediate, 2=Delayed but caught by secondary system, 3=Caught by manual check, 4=Poor, 5=Undetectable.
+    prompt = f"""
+    Title: {title}
+    Current State: {current_state}
+    Proposed State: {proposed_state}
+    Justification: {justification}
     """
 
-    print("Sending deviation to Gemini for assessment...\n")
-    result = assess_deviation(sample_deviation, sample_fmea_criteria)
-    print(result)
+    try:
+        response = client.models.generate_content(
+            model='gemini-flash-latest',
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                system_instruction=system_instruction,
+                response_mime_type="application/json",
+                response_schema=QAChangeControlAssessment, 
+                temperature=0.2, 
+            ),
+        )
+        return response.parsed 
+    except Exception as e:
+        print(f"API Error: {e}")
+        return None
