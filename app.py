@@ -13,6 +13,7 @@ from models import db, User
 from routes.auth import auth_bp
 from routes.deviations import deviations_bp
 from routes.change_controls import cc_bp
+from routes.documents import documents_bp
 
 # --- Load Environment Variables ---
 load_dotenv() 
@@ -41,6 +42,7 @@ jwt = JWTManager(app)
 app.register_blueprint(auth_bp)
 app.register_blueprint(deviations_bp)
 app.register_blueprint(cc_bp)
+app.register_blueprint(documents_bp)
 
 # --- CLI Command to Create Initial Admin ---
 @app.cli.command("create-admin")

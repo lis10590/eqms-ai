@@ -46,6 +46,12 @@ export default function Navbar() {
             >
               Change Controls
             </Link>
+            <Link
+              href="/documents"
+              className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors"
+            >
+              Documents
+            </Link>
 
             {/* Conditionally render the Registration link */}
             {isAdmin && (
