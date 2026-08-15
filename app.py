@@ -14,6 +14,8 @@ from routes.auth import auth_bp
 from routes.deviations import deviations_bp
 from routes.change_controls import cc_bp
 from routes.documents import documents_bp
+from routes.equipment import equipment_bp
+from routes.inventory import inventory_bp
 
 # --- Load Environment Variables ---
 load_dotenv() 
@@ -43,7 +45,8 @@ app.register_blueprint(auth_bp)
 app.register_blueprint(deviations_bp)
 app.register_blueprint(cc_bp)
 app.register_blueprint(documents_bp)
-
+app.register_blueprint(equipment_bp)
+app.register_blueprint(inventory_bp)
 # --- CLI Command to Create Initial Admin ---
 @app.cli.command("create-admin")
 @click.argument("username")

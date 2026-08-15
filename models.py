@@ -116,3 +116,48 @@ class DocumentVersion(db.Model):
         foreign_keys='DocumentVersion.reviewer_id', 
         backref='assigned_reviews'
     )
+
+class Equipment(db.Model):
+    __tablename__ = 'equipment'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(150), nullable=False)
+    serial_number = db.Column(db.String(100), unique=True, nullable=False)
+    location = db.Column(db.String(100), nullable=True)
+    
+    # Store dates to calculate when the next calibration is due
+    last_calibration_date = db.Column(db.Date, nullable=False)
+    next_calibration_date = db.Column(db.Date, nullable=False)
+    
+    status = db.Column(db.String(50), default='Active', nullable=False) # e.g., 'Active', 'Out of Service'
+    
+    added_by_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    added_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+
+    # Relationship to know who added it
+    added_by = db.relationship('User', foreign_keys=[added_by_id])
+
+
+class InventoryItem(db.Model):
+    __tablename__ = 'inventory_items'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(150), nullable=False)
+    category = db.Column(db.String(50), nullable=False) # e.g., 'Reagent', 'Consumable'
+    lot_number = db.Column(db.String(100), nullable=False)
+    
+    quantity = db.Column(db.Integer, nullable=False, default=0)
+    unit = db.Column(db.String(50), nullable=False) # e.g., 'mL', 'boxes', 'vials'
+    
+    expiration_date = db.Column(db.Date, nullable=False)
+    status = db.Column(db.String(50), default='Released', nullable=False) # e.g., 'Quarantine', 'Released', 'Expired'
+    
+    added_by_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    added_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+
+    # Explicit relationship mapping to avoid AmbiguousForeignKeysError
+    added_by = db.relationship(
+        'User', 
+        foreign_keys='InventoryItem.added_by_id', 
+        backref='added_inventory'
+    )

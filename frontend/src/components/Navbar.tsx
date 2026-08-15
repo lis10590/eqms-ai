@@ -52,6 +52,18 @@ export default function Navbar() {
             >
               Documents
             </Link>
+            <Link
+              href="/equipment"
+              className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors"
+            >
+              Calibrations
+            </Link>
+            <Link
+              href="/inventory"
+              className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors"
+            >
+              Inventory
+            </Link>
 
             {/* Conditionally render the Registration link */}
             {isAdmin && (
