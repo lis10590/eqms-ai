@@ -20,20 +20,17 @@ export default function DeviationDetailsModal({
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Editable form state
   const [editData, setEditData] = useState({
     submitter_id: "",
     deviation_text: "",
   });
 
-  // Populate the edit form when the modal opens or the deviation changes
   useEffect(() => {
     if (deviation) {
       setEditData({
         submitter_id: deviation.submitter_id || "",
         deviation_text: deviation.deviation_text || "",
       });
-      // Reset edit mode if a new deviation is opened
       setIsEditing(false);
     }
   }, [deviation]);
@@ -53,7 +50,7 @@ export default function DeviationDetailsModal({
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`, // Attach the JWT
+            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify(editData),
         },
@@ -61,10 +58,9 @@ export default function DeviationDetailsModal({
 
       if (response.ok) {
         setIsEditing(false);
-        onSuccess(); // Refresh the table
-        onClose(); // Close the modal
+        onSuccess();
+        onClose();
       } else if (response.status === 401) {
-        // Handle expired or invalid token
         localStorage.removeItem("token");
         router.push("/");
       } else {
@@ -78,58 +74,92 @@ export default function DeviationDetailsModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl overflow-hidden max-h-[90vh] flex flex-col">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 transition-opacity">
+      {/* Floating Glass Container */}
+      <div className="bg-theme-card/95 backdrop-blur-2xl rounded-3xl shadow-2xl border border-theme-border/50 w-full max-w-2xl overflow-hidden max-h-[90vh] flex flex-col transform transition-all duration-300">
         {/* Header */}
-        <div className="bg-gray-50 border-b px-6 py-4 flex justify-between items-center shrink-0">
-          <h2 className="text-xl font-bold text-gray-800">
-            Deviation Details {deviation.id && `(#${deviation.id})`}
+        <div className="bg-theme-body/50 border-b border-theme-border/50 px-8 py-6 flex justify-between items-center shrink-0">
+          <h2 className="text-2xl font-extrabold text-theme-text tracking-tight">
+            Deviation Details{" "}
+            {deviation.id && (
+              <span className="text-theme-muted font-medium ml-1">
+                (#{deviation.id})
+              </span>
+            )}
           </h2>
           <div className="flex items-center space-x-4">
             {!isEditing && (
               <button
                 onClick={() => setIsEditing(true)}
-                className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+                className="text-sm bg-theme-primary/10 text-theme-primary px-4 py-2 rounded-xl hover:bg-theme-primary/20 font-bold transition-colors"
               >
                 Edit Details
               </button>
             )}
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-gray-600"
+              className="text-theme-muted hover:text-theme-text bg-theme-card rounded-full p-2 border border-theme-border/50 shadow-sm transition-colors focus:outline-none"
             >
-              ✕
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
             </button>
           </div>
         </div>
 
         {/* Body - Scrollable */}
-        <div className="p-6 overflow-y-auto">
-          {/* AI Assessment Readout */}
-          <div className="bg-blue-50 border border-blue-200 rounded p-4 mb-6">
-            <h3 className="font-semibold text-blue-900 mb-2">
+        <div className="p-8 overflow-y-auto">
+          {/* AI Assessment Premium Readout */}
+          <div className="bg-theme-accent/5 p-6 rounded-3xl border border-theme-accent/20 shadow-sm relative overflow-hidden mb-8">
+            <div className="absolute top-0 right-0 p-4 opacity-10">
+              <svg
+                className="w-24 h-24 text-theme-accent"
+                fill="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+              </svg>
+            </div>
+
+            <h3 className="font-extrabold text-theme-accent text-lg flex items-center gap-2 mb-4 relative z-10">
+              <div className="w-2 h-2 rounded-full bg-theme-accent animate-pulse"></div>
               AI Triage Results
             </h3>
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <span className="font-semibold text-gray-700">Category: </span>
-                <span className="text-gray-900">
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm relative z-10">
+              <div className="bg-theme-card/80 backdrop-blur-sm p-4 rounded-2xl border border-theme-border/50 shadow-sm">
+                <span className="block font-bold text-theme-muted uppercase tracking-wide text-xs mb-1">
+                  Category
+                </span>
+                <span className="text-theme-text font-medium text-base">
                   {deviation.category || deviation.root_cause_category}
                 </span>
               </div>
-              <div>
-                <span className="font-semibold text-gray-700">RPN: </span>
+              <div className="bg-theme-card/80 backdrop-blur-sm p-4 rounded-2xl border border-theme-border/50 shadow-sm">
+                <span className="block font-bold text-theme-muted uppercase tracking-wide text-xs mb-1">
+                  Risk Priority Number
+                </span>
                 <span
-                  className={`font-bold ${(deviation.rpn ?? 0) > 50 ? "text-red-600" : "text-green-600"}`}
+                  className={`font-extrabold text-lg ${(deviation.rpn ?? 0) > 50 ? "text-red-500" : "text-green-500"}`}
                 >
                   {deviation.rpn}
                 </span>
               </div>
-              <div className="col-span-2">
-                <span className="font-semibold text-gray-700">
-                  Required Action:{" "}
+              <div className="col-span-1 md:col-span-2 bg-theme-card/80 backdrop-blur-sm p-4 rounded-2xl border border-theme-border/50 shadow-sm">
+                <span className="block font-bold text-theme-muted uppercase tracking-wide text-xs mb-1">
+                  Required Action
                 </span>
-                <span className="text-gray-900">
+                <span className="text-theme-text font-medium text-base">
                   {deviation.required_action}
                 </span>
               </div>
@@ -138,9 +168,13 @@ export default function DeviationDetailsModal({
 
           {/* Core Data: Toggle between View and Edit Modes */}
           {isEditing ? (
-            <form id="edit-form" onSubmit={handleUpdate} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+            <form
+              id="edit-form"
+              onSubmit={handleUpdate}
+              className="space-y-5 bg-theme-body/30 p-6 rounded-3xl border border-theme-border/50"
+            >
+              <div className="space-y-1">
+                <label className="block text-sm font-bold text-theme-muted ml-1">
                   Submitter ID
                 </label>
                 <input
@@ -150,11 +184,11 @@ export default function DeviationDetailsModal({
                   onChange={(e) =>
                     setEditData({ ...editData, submitter_id: e.target.value })
                   }
-                  className="w-full border border-gray-300 rounded p-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-4 py-3 bg-theme-card border border-theme-border rounded-2xl focus:ring-2 focus:ring-theme-accent outline-none shadow-sm text-theme-text transition-all"
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+              <div className="space-y-1">
+                <label className="block text-sm font-bold text-theme-muted ml-1">
                   Deviation Text
                 </label>
                 <textarea
@@ -164,32 +198,34 @@ export default function DeviationDetailsModal({
                   onChange={(e) =>
                     setEditData({ ...editData, deviation_text: e.target.value })
                   }
-                  className="w-full border border-gray-300 rounded p-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-4 py-3 bg-theme-card border border-theme-border rounded-2xl focus:ring-2 focus:ring-theme-accent outline-none shadow-sm text-theme-text resize-none transition-all"
                 />
               </div>
             </form>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-6 px-2">
               <div>
-                <span className="block text-sm font-medium text-gray-700 mb-1">
+                <span className="block text-sm font-bold text-theme-muted mb-1 uppercase tracking-wide">
                   Submitter ID
                 </span>
-                <p className="text-gray-900">{deviation.submitter_id}</p>
+                <p className="text-theme-text font-medium text-lg">
+                  {deviation.submitter_id}
+                </p>
               </div>
               <div>
-                <span className="block text-sm font-medium text-gray-700 mb-1">
+                <span className="block text-sm font-bold text-theme-muted mb-2 uppercase tracking-wide">
                   Deviation Text
                 </span>
-                <p className="text-gray-900 bg-gray-50 p-3 rounded border whitespace-pre-wrap">
+                <p className="text-theme-text bg-theme-body/50 p-5 rounded-2xl border border-theme-border/50 whitespace-pre-wrap leading-relaxed shadow-inner">
                   {deviation.deviation_text}
                 </p>
               </div>
               {deviation.qa_narrative && (
                 <div>
-                  <span className="block text-sm font-medium text-gray-700 mb-1">
+                  <span className="block text-sm font-bold text-theme-muted mb-2 uppercase tracking-wide">
                     QA Narrative
                   </span>
-                  <p className="text-gray-900 bg-gray-50 p-3 rounded border whitespace-pre-wrap">
+                  <p className="text-theme-text bg-theme-body/50 p-5 rounded-2xl border border-theme-border/50 whitespace-pre-wrap leading-relaxed shadow-inner">
                     {deviation.qa_narrative}
                   </p>
                 </div>
@@ -200,11 +236,11 @@ export default function DeviationDetailsModal({
 
         {/* Footer */}
         {isEditing && (
-          <div className="bg-gray-50 border-t px-6 py-4 flex justify-end space-x-3 shrink-0">
+          <div className="bg-theme-body/50 border-t border-theme-border/50 px-8 py-6 flex justify-end space-x-3 shrink-0">
             <button
               type="button"
               onClick={() => setIsEditing(false)}
-              className="px-4 py-2 text-gray-700 border border-gray-300 rounded hover:bg-gray-100"
+              className="px-6 py-3 border border-theme-border rounded-2xl text-sm font-bold text-theme-text hover:bg-theme-card transition-colors"
             >
               Cancel
             </button>
@@ -212,9 +248,9 @@ export default function DeviationDetailsModal({
               type="submit"
               form="edit-form"
               disabled={isLoading}
-              className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 disabled:opacity-50"
+              className="bg-theme-primary text-white px-6 py-3 rounded-2xl hover:bg-theme-primaryHover disabled:opacity-50 font-bold shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5"
             >
-              {isLoading ? "Saving..." : "Save Changes"}
+              {isLoading ? "Saving Changes..." : "Save Changes"}
             </button>
           </div>
         )}

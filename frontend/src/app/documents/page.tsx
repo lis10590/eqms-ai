@@ -3,7 +3,6 @@ import { useState, useEffect } from "react";
 import UploadSopModal from "../../components/UploadSopModal";
 import Navbar from "@/components/Navbar";
 
-// 1. Updated Interface with the 'reviewer' property
 interface DocumentVersion {
   version_id: number;
   document_number: string;
@@ -14,7 +13,6 @@ interface DocumentVersion {
   reviewer: string;
 }
 
-// 2. Updated Tabs
 type TabState = "active" | "my_uploads" | "my_reviews";
 
 export default function DocumentDashboard() {
@@ -23,7 +21,6 @@ export default function DocumentDashboard() {
   const [message, setMessage] = useState<string>("");
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // --- Fetch Documents (Updated with ?view= query) ---
   const fetchDocuments = async (viewType: string) => {
     try {
       const token = localStorage.getItem("token");
@@ -54,12 +51,10 @@ export default function DocumentDashboard() {
     }
   };
 
-  // Trigger fetch when tab changes
   useEffect(() => {
     fetchDocuments(activeTab);
   }, [activeTab]);
 
-  // --- View PDF (Fixed token check) ---
   const handleViewPdf = async (versionId: number) => {
     try {
       const token = localStorage.getItem("token");
@@ -88,7 +83,6 @@ export default function DocumentDashboard() {
     }
   };
 
-  // --- Approve Document ---
   const handleApprove = async (versionId: number) => {
     try {
       const token = localStorage.getItem("token");
@@ -110,7 +104,8 @@ export default function DocumentDashboard() {
 
       if (response.ok) {
         setMessage("Document successfully authorized!");
-        fetchDocuments(activeTab); // Refresh current view
+        fetchDocuments(activeTab);
+        setTimeout(() => setMessage(""), 4000);
       } else {
         const data = await response.json();
         alert(data.error || "Failed to approve document");
@@ -121,151 +116,186 @@ export default function DocumentDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen text-theme-text transition-colors duration-500">
       <Navbar />
-      <div className="max-w-6xl mx-auto mt-10 p-6 bg-white rounded-lg shadow-sm border border-gray-200">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold text-gray-800">
-            Document Control Center
-          </h1>
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 font-medium shadow-sm"
-          >
-            + Upload New SOP
-          </button>
-        </div>
 
-        {message && (
-          <div className="mb-4 p-3 bg-blue-50 text-blue-700 rounded-md text-sm border border-blue-200">
-            {message}
+      <div className="max-w-7xl mx-auto mt-12 p-4 sm:p-8">
+        {/* PREMIUM GLASS CONTAINER */}
+        <div className="bg-theme-card/60 backdrop-blur-2xl rounded-3xl shadow-theme-card border border-theme-border/50 overflow-hidden transition-all duration-500">
+          <div className="p-8 border-b border-theme-border/50 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div>
+              <h1 className="text-3xl font-extrabold tracking-tight">
+                Document Control Center
+              </h1>
+              <p className="text-theme-muted mt-1 font-medium">
+                Manage and review Standard Operating Procedures.
+              </p>
+            </div>
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="bg-theme-primary text-white px-6 py-3 rounded-2xl hover:bg-theme-primaryHover font-bold shadow-md hover:shadow-lg transition-all transform hover:-translate-y-1 flex items-center gap-2"
+            >
+              + Upload New SOP
+            </button>
           </div>
-        )}
 
-        {/* Tabs */}
-        <div className="flex border-b border-gray-200 mb-6 space-x-2">
-          <button
-            onClick={() => setActiveTab("active")}
-            className={`py-2 px-6 font-medium text-sm ${
-              activeTab === "active"
-                ? "border-b-2 border-blue-600 text-blue-600"
-                : "text-gray-500 hover:text-gray-700"
-            }`}
-          >
-            Active SOPs
-          </button>
-          <button
-            onClick={() => setActiveTab("my_uploads")}
-            className={`py-2 px-6 font-medium text-sm ${
-              activeTab === "my_uploads"
-                ? "border-b-2 border-blue-600 text-blue-600"
-                : "text-gray-500 hover:text-gray-700"
-            }`}
-          >
-            My Uploads
-          </button>
-          <button
-            onClick={() => setActiveTab("my_reviews")}
-            className={`py-2 px-6 font-medium text-sm ${
-              activeTab === "my_reviews"
-                ? "border-b-2 border-blue-600 text-blue-600"
-                : "text-gray-500 hover:text-gray-700"
-            }`}
-          >
-            For My Review
-          </button>
-        </div>
+          {message && (
+            <div className="mx-8 mt-6 p-4 bg-theme-accent/10 text-theme-accent border border-theme-accent/20 rounded-2xl font-semibold flex items-center gap-3">
+              <div className="w-2 h-2 rounded-full bg-theme-accent animate-pulse"></div>
+              {message}
+            </div>
+          )}
 
-        {/* Data Table */}
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200 text-sm">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left font-medium text-gray-500 uppercase tracking-wider">
-                  Document No.
-                </th>
-                <th className="px-6 py-3 text-left font-medium text-gray-500 uppercase tracking-wider">
-                  Title
-                </th>
-                <th className="px-6 py-3 text-left font-medium text-gray-500 uppercase tracking-wider">
-                  Version
-                </th>
-                <th className="px-6 py-3 text-left font-medium text-gray-500 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-left font-medium text-gray-500 uppercase tracking-wider">
-                  Assigned To
-                </th>
-                <th className="px-6 py-3 text-right font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {documents.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={6}
-                    className="px-6 py-4 text-center text-gray-500"
-                  >
-                    No documents found in this category.
-                  </td>
+          <div className="px-8 pt-6">
+            {/* Premium Pill Tabs */}
+            <div className="flex space-x-2 bg-theme-body/50 p-1.5 rounded-2xl w-max border border-theme-border/50 shadow-inner">
+              <button
+                onClick={() => setActiveTab("active")}
+                className={`py-2.5 px-6 rounded-xl font-bold text-sm transition-all duration-300 ${
+                  activeTab === "active"
+                    ? "bg-theme-card shadow-sm text-theme-text"
+                    : "text-theme-muted hover:text-theme-text"
+                }`}
+              >
+                Active SOPs
+              </button>
+              <button
+                onClick={() => setActiveTab("my_uploads")}
+                className={`py-2.5 px-6 rounded-xl font-bold text-sm transition-all duration-300 ${
+                  activeTab === "my_uploads"
+                    ? "bg-theme-card shadow-sm text-theme-text"
+                    : "text-theme-muted hover:text-theme-text"
+                }`}
+              >
+                My Uploads
+              </button>
+              <button
+                onClick={() => setActiveTab("my_reviews")}
+                className={`py-2.5 px-6 rounded-xl font-bold text-sm transition-all duration-300 ${
+                  activeTab === "my_reviews"
+                    ? "bg-theme-card shadow-sm text-theme-text"
+                    : "text-theme-muted hover:text-theme-text"
+                }`}
+              >
+                For My Review
+              </button>
+            </div>
+          </div>
+
+          {/* Redesigned Minimalist Table */}
+          <div className="overflow-x-auto p-4 sm:p-8">
+            <table className="min-w-full text-sm text-left border-collapse">
+              <thead>
+                <tr className="border-b-2 border-theme-border/50 text-theme-muted">
+                  <th className="pb-4 font-bold uppercase tracking-wider pl-4">
+                    Document No.
+                  </th>
+                  <th className="pb-4 font-bold uppercase tracking-wider">
+                    Title
+                  </th>
+                  <th className="pb-4 font-bold uppercase tracking-wider">
+                    Version
+                  </th>
+                  <th className="pb-4 font-bold uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th className="pb-4 font-bold uppercase tracking-wider">
+                    Assigned To
+                  </th>
+                  <th className="pb-4 font-bold uppercase tracking-wider text-right pr-4">
+                    Actions
+                  </th>
                 </tr>
-              ) : (
-                documents.map((doc) => (
-                  <tr key={doc.version_id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 font-medium text-gray-900">
-                      {doc.document_number}
-                    </td>
-                    <td className="px-6 py-4 text-gray-700">{doc.title}</td>
-                    <td className="px-6 py-4 text-gray-700">{doc.version}</td>
-                    <td className="px-6 py-4">
-                      <span
-                        className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                          doc.status === "Authorized"
-                            ? "bg-green-100 text-green-800"
-                            : "bg-yellow-100 text-yellow-800"
-                        }`}
-                      >
-                        {doc.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-gray-700 font-medium">
-                      {doc.reviewer}
-                    </td>
-                    <td className="px-6 py-4 text-right space-x-3">
-                      <button
-                        onClick={() => handleViewPdf(doc.version_id)}
-                        className="text-blue-600 hover:text-blue-900 font-medium"
-                      >
-                        View PDF
-                      </button>
-
-                      {/* Only show Approve if the user is in their review queue */}
-                      {activeTab === "my_reviews" && (
-                        <button
-                          onClick={() => handleApprove(doc.version_id)}
-                          className="text-green-600 hover:text-green-900 font-medium"
+              </thead>
+              <tbody className="divide-y divide-theme-border/30">
+                {documents.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan={6}
+                      className="py-12 text-center text-theme-muted font-medium"
+                    >
+                      <div className="flex flex-col items-center justify-center gap-3">
+                        <svg
+                          className="w-12 h-12 opacity-50"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
                         >
-                          Approve
-                        </button>
-                      )}
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={1}
+                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                          />
+                        </svg>
+                        No documents found in this queue.
+                      </div>
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ) : (
+                  documents.map((doc) => (
+                    <tr
+                      key={doc.version_id}
+                      className="hover:bg-theme-body/50 transition-colors group"
+                    >
+                      <td className="py-5 pl-4 font-bold text-theme-text">
+                        {doc.document_number}
+                      </td>
+                      <td className="py-5 text-theme-text font-medium">
+                        {doc.title}
+                      </td>
+                      <td className="py-5">
+                        <span className="bg-theme-body px-2 py-1 rounded-lg border border-theme-border/50 font-mono text-xs text-theme-text shadow-sm">
+                          v{doc.version}
+                        </span>
+                      </td>
+                      <td className="py-5">
+                        <span
+                          className={`px-3 py-1 inline-flex text-xs font-bold rounded-full border shadow-sm ${
+                            doc.status === "Authorized"
+                              ? "bg-green-500/10 text-green-600 border-green-500/20"
+                              : "bg-amber-500/10 text-amber-600 border-amber-500/20"
+                          }`}
+                        >
+                          {doc.status}
+                        </span>
+                      </td>
+                      <td className="py-5 text-theme-muted font-medium">
+                        {doc.reviewer}
+                      </td>
+                      <td className="py-5 text-right space-x-4 pr-4">
+                        <button
+                          onClick={() => handleViewPdf(doc.version_id)}
+                          className="text-theme-accent hover:text-theme-primary font-bold transition-colors"
+                        >
+                          View PDF
+                        </button>
+
+                        {activeTab === "my_reviews" && (
+                          <button
+                            onClick={() => handleApprove(doc.version_id)}
+                            className="text-green-600 hover:text-green-500 font-bold transition-colors"
+                          >
+                            Approve
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
 
-        {/* Upload Modal Component */}
         <UploadSopModal
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
           onSuccess={() => {
             setIsModalOpen(false);
             setMessage("New SOP uploaded successfully!");
-            fetchDocuments(activeTab); // Refresh the list
+            fetchDocuments(activeTab);
+            setTimeout(() => setMessage(""), 4000);
           }}
         />
       </div>

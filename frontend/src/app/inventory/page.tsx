@@ -87,7 +87,8 @@ export default function InventoryDashboard() {
           status: "Released",
         });
         fetchInventory();
-        setMessage("Inventory logged successfully!");
+        setMessage("Material successfully logged to warehouse.");
+        setTimeout(() => setMessage(""), 4000);
       } else {
         alert("Failed to add inventory.");
       }
@@ -96,7 +97,6 @@ export default function InventoryDashboard() {
     }
   };
 
-  // Helper to color-code expiration dates
   const getExpirationStatusUI = (expDateString: string) => {
     const expDate = new Date(expDateString);
     const today = new Date();
@@ -105,226 +105,262 @@ export default function InventoryDashboard() {
 
     if (diffDays < 0) {
       return (
-        <span className="px-2 py-1 bg-red-100 text-red-800 font-bold rounded-full text-xs">
+        <span className="px-3 py-1 bg-red-500/10 text-red-500 border border-red-500/20 font-bold rounded-full text-xs shadow-sm whitespace-nowrap">
           Expired
         </span>
       );
     } else if (diffDays <= 30) {
       return (
-        <span className="px-2 py-1 bg-yellow-100 text-yellow-800 font-bold rounded-full text-xs">
+        <span className="px-3 py-1 bg-amber-500/10 text-amber-500 border border-amber-500/20 font-bold rounded-full text-xs shadow-sm whitespace-nowrap">
           Exp. Soon ({diffDays}d)
         </span>
       );
     } else {
-      return <span className="text-gray-700">{expDateString}</span>;
+      return (
+        <span className="text-theme-text font-medium">{expDateString}</span>
+      );
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Insert your custom Navbar here */}
+    <div className="min-h-screen text-theme-text transition-colors duration-500">
       <Navbar />
 
-      {/* Main Content Dashboard */}
-      <div className="max-w-6xl mx-auto mt-8 p-6 bg-white rounded-lg shadow-sm border border-gray-200">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold text-gray-800">
-            Warehouse & Inventory
-          </h1>
-          <button
-            onClick={() => setShowForm(!showForm)}
-            className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 font-medium shadow-sm"
-          >
-            {showForm ? "Cancel" : "+ Receive Material"}
-          </button>
-        </div>
-
-        {message && (
-          <div className="mb-4 p-3 bg-blue-50 text-blue-700 rounded-md text-sm">
-            {message}
+      <div className="max-w-7xl mx-auto mt-12 p-4 sm:p-8">
+        {/* PREMIUM GLASS CONTAINER */}
+        <div className="bg-theme-card/60 backdrop-blur-2xl rounded-3xl shadow-theme-card border border-theme-border/50 overflow-hidden transition-all duration-500">
+          {/* Header Section */}
+          <div className="p-8 border-b border-theme-border/50 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div>
+              <h1 className="text-3xl font-extrabold tracking-tight">
+                Warehouse Control
+              </h1>
+              <p className="text-theme-muted mt-1 font-medium">
+                Manage reagents, raw materials, and consumables.
+              </p>
+            </div>
+            <button
+              onClick={() => setShowForm(!showForm)}
+              className="bg-theme-primary text-white px-6 py-3 rounded-2xl hover:bg-theme-primaryHover font-bold shadow-md hover:shadow-lg transition-all transform hover:-translate-y-1 flex items-center gap-2"
+            >
+              {showForm ? "Cancel Entry" : "+ Receive Material"}
+            </button>
           </div>
-        )}
 
-        {/* Receive Material Form */}
-        {showForm && (
-          <form
-            onSubmit={handleAddInventory}
-            className="mb-8 p-4 bg-gray-50 border border-gray-200 rounded-lg grid grid-cols-3 gap-4"
-          >
-            <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1">
-                Item Name
-              </label>
-              <input
-                required
-                type="text"
-                placeholder="e.g., Isopropyl Alcohol"
-                value={formData.name}
-                onChange={(e) =>
-                  setFormData({ ...formData, name: e.target.value })
-                }
-                className="w-full px-3 py-2 border rounded-md"
-              />
+          {message && (
+            <div className="mx-8 mt-6 p-4 bg-theme-accent/10 text-theme-accent border border-theme-accent/20 rounded-2xl font-semibold flex items-center gap-3">
+              <div className="w-2 h-2 rounded-full bg-theme-accent animate-pulse"></div>
+              {message}
             </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1">
-                Category
-              </label>
-              <select
-                value={formData.category}
-                onChange={(e) =>
-                  setFormData({ ...formData, category: e.target.value })
-                }
-                className="w-full px-3 py-2 border rounded-md bg-white"
-              >
-                <option value="Reagent">Reagent</option>
-                <option value="Consumable">Consumable</option>
-                <option value="Raw Material">Raw Material</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1">
-                Lot / Batch Number
-              </label>
-              <input
-                required
-                type="text"
-                placeholder="e.g., L-90210"
-                value={formData.lot_number}
-                onChange={(e) =>
-                  setFormData({ ...formData, lot_number: e.target.value })
-                }
-                className="w-full px-3 py-2 border rounded-md"
-              />
-            </div>
+          )}
 
-            <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1">
-                Quantity
-              </label>
-              <input
-                required
-                type="number"
-                min="0"
-                placeholder="0"
-                value={formData.quantity}
-                onChange={(e) =>
-                  setFormData({ ...formData, quantity: e.target.value })
-                }
-                className="w-full px-3 py-2 border rounded-md"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1">
-                Unit of Measure
-              </label>
-              <input
-                required
-                type="text"
-                placeholder="e.g., Bottles, Boxes, mL"
-                value={formData.unit}
-                onChange={(e) =>
-                  setFormData({ ...formData, unit: e.target.value })
-                }
-                className="w-full px-3 py-2 border rounded-md"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1">
-                Expiration Date
-              </label>
-              <input
-                required
-                type="date"
-                value={formData.expiration_date}
-                onChange={(e) =>
-                  setFormData({ ...formData, expiration_date: e.target.value })
-                }
-                className="w-full px-3 py-2 border rounded-md"
-              />
-            </div>
-
-            <div className="col-span-3">
-              <button
-                type="submit"
-                className="w-full bg-indigo-600 text-white py-2 rounded-md font-bold hover:bg-indigo-700 transition-colors"
-              >
-                Log Inventory to Warehouse
-              </button>
-            </div>
-          </form>
-        )}
-
-        {/* Inventory Table */}
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200 text-sm">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left font-medium text-gray-500 uppercase">
+          {/* Elegant Form Component */}
+          {showForm && (
+            <form
+              onSubmit={handleAddInventory}
+              className="m-8 p-6 bg-theme-body/50 border border-theme-border rounded-3xl grid grid-cols-1 md:grid-cols-3 gap-6 transition-all"
+            >
+              <div className="space-y-1">
+                <label className="block text-sm font-bold text-theme-muted ml-1">
                   Item Name
-                </th>
-                <th className="px-6 py-3 text-left font-medium text-gray-500 uppercase">
+                </label>
+                <input
+                  required
+                  type="text"
+                  placeholder="e.g., Isopropyl Alcohol"
+                  value={formData.name}
+                  onChange={(e) =>
+                    setFormData({ ...formData, name: e.target.value })
+                  }
+                  className="w-full px-4 py-3 bg-theme-card border border-theme-border rounded-2xl focus:ring-2 focus:ring-theme-accent outline-none shadow-sm text-theme-text transition-all"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="block text-sm font-bold text-theme-muted ml-1">
                   Category
-                </th>
-                <th className="px-6 py-3 text-left font-medium text-gray-500 uppercase">
-                  Lot #
-                </th>
-                <th className="px-6 py-3 text-left font-medium text-gray-500 uppercase">
+                </label>
+                <select
+                  value={formData.category}
+                  onChange={(e) =>
+                    setFormData({ ...formData, category: e.target.value })
+                  }
+                  className="w-full px-4 py-3 bg-theme-card border border-theme-border rounded-2xl focus:ring-2 focus:ring-theme-accent outline-none shadow-sm text-theme-text transition-all"
+                >
+                  <option value="Reagent">Reagent</option>
+                  <option value="Consumable">Consumable</option>
+                  <option value="Raw Material">Raw Material</option>
+                </select>
+              </div>
+              <div className="space-y-1">
+                <label className="block text-sm font-bold text-theme-muted ml-1">
+                  Lot / Batch Number
+                </label>
+                <input
+                  required
+                  type="text"
+                  placeholder="e.g., L-90210"
+                  value={formData.lot_number}
+                  onChange={(e) =>
+                    setFormData({ ...formData, lot_number: e.target.value })
+                  }
+                  className="w-full px-4 py-3 bg-theme-card border border-theme-border rounded-2xl focus:ring-2 focus:ring-theme-accent outline-none shadow-sm text-theme-text transition-all"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="block text-sm font-bold text-theme-muted ml-1">
                   Quantity
-                </th>
-                <th className="px-6 py-3 text-left font-medium text-gray-500 uppercase">
-                  Expiration
-                </th>
-                <th className="px-6 py-3 text-left font-medium text-gray-500 uppercase">
-                  Status
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {inventory.map((item) => (
-                <tr key={item.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 font-medium text-gray-900">
-                    {item.name}
-                  </td>
-                  <td className="px-6 py-4 text-gray-500">{item.category}</td>
-                  <td className="px-6 py-4 text-gray-700 font-mono text-xs">
-                    {item.lot_number}
-                  </td>
-                  <td className="px-6 py-4 font-medium">
-                    {item.quantity}{" "}
-                    <span className="text-gray-400 font-normal">
-                      {item.unit}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    {getExpirationStatusUI(item.expiration_date)}
-                  </td>
-                  <td className="px-6 py-4">
-                    <span
-                      className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                        item.status === "Released"
-                          ? "bg-green-100 text-green-800"
-                          : "bg-yellow-100 text-yellow-800"
-                      }`}
+                </label>
+                <input
+                  required
+                  type="number"
+                  min="0"
+                  placeholder="0"
+                  value={formData.quantity}
+                  onChange={(e) =>
+                    setFormData({ ...formData, quantity: e.target.value })
+                  }
+                  className="w-full px-4 py-3 bg-theme-card border border-theme-border rounded-2xl focus:ring-2 focus:ring-theme-accent outline-none shadow-sm text-theme-text transition-all"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="block text-sm font-bold text-theme-muted ml-1">
+                  Unit of Measure
+                </label>
+                <input
+                  required
+                  type="text"
+                  placeholder="e.g., Bottles, Boxes, mL"
+                  value={formData.unit}
+                  onChange={(e) =>
+                    setFormData({ ...formData, unit: e.target.value })
+                  }
+                  className="w-full px-4 py-3 bg-theme-card border border-theme-border rounded-2xl focus:ring-2 focus:ring-theme-accent outline-none shadow-sm text-theme-text transition-all"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="block text-sm font-bold text-theme-muted ml-1">
+                  Expiration Date
+                </label>
+                <input
+                  required
+                  type="date"
+                  value={formData.expiration_date}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      expiration_date: e.target.value,
+                    })
+                  }
+                  className="w-full px-4 py-3 bg-theme-card border border-theme-border rounded-2xl focus:ring-2 focus:ring-theme-accent outline-none shadow-sm text-theme-text transition-all"
+                />
+              </div>
+
+              <div className="col-span-1 md:col-span-3 mt-2">
+                <button
+                  type="submit"
+                  className="w-full bg-theme-primary text-white py-4 rounded-2xl font-bold hover:bg-theme-primaryHover shadow-md transition-all flex justify-center items-center gap-2"
+                >
+                  Log Inventory to Warehouse
+                </button>
+              </div>
+            </form>
+          )}
+
+          {/* Redesigned Minimalist Table */}
+          <div className="overflow-x-auto p-4 sm:p-8">
+            <table className="min-w-full text-sm text-left border-collapse">
+              <thead>
+                <tr className="border-b-2 border-theme-border/50 text-theme-muted">
+                  <th className="pb-4 font-bold uppercase tracking-wider pl-4">
+                    Item Name
+                  </th>
+                  <th className="pb-4 font-bold uppercase tracking-wider">
+                    Category
+                  </th>
+                  <th className="pb-4 font-bold uppercase tracking-wider">
+                    Lot #
+                  </th>
+                  <th className="pb-4 font-bold uppercase tracking-wider">
+                    Quantity
+                  </th>
+                  <th className="pb-4 font-bold uppercase tracking-wider">
+                    Expiration
+                  </th>
+                  <th className="pb-4 font-bold uppercase tracking-wider">
+                    Status
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-theme-border/30">
+                {inventory.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan={6}
+                      className="py-12 text-center text-theme-muted font-medium"
                     >
-                      {item.status}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-              {inventory.length === 0 && (
-                <tr>
-                  <td
-                    colSpan={6}
-                    className="px-6 py-4 text-center text-gray-500"
-                  >
-                    Warehouse is empty. Receive new materials to populate this
-                    list.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+                      <div className="flex flex-col items-center justify-center gap-3">
+                        <svg
+                          className="w-12 h-12 opacity-50"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={1}
+                            d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
+                          />
+                        </svg>
+                        Warehouse is completely empty. Add materials to begin
+                        tracking.
+                      </div>
+                    </td>
+                  </tr>
+                ) : (
+                  inventory.map((item) => (
+                    <tr
+                      key={item.id}
+                      className="hover:bg-theme-body/50 transition-colors group"
+                    >
+                      <td className="py-5 pl-4 font-bold text-theme-text">
+                        {item.name}
+                      </td>
+                      <td className="py-5 text-theme-muted font-medium">
+                        {item.category}
+                      </td>
+                      <td className="py-5">
+                        <span className="bg-theme-body px-2 py-1 rounded-lg border border-theme-border/50 font-mono text-xs text-theme-text shadow-sm">
+                          {item.lot_number}
+                        </span>
+                      </td>
+                      <td className="py-5 font-bold text-lg text-theme-text">
+                        {item.quantity}{" "}
+                        <span className="text-theme-muted font-medium text-sm">
+                          {item.unit}
+                        </span>
+                      </td>
+                      <td className="py-5">
+                        {getExpirationStatusUI(item.expiration_date)}
+                      </td>
+                      <td className="py-5">
+                        <span
+                          className={`px-3 py-1 inline-flex text-xs font-bold rounded-full border shadow-sm ${
+                            item.status === "Released"
+                              ? "bg-green-500/10 text-green-600 border-green-500/20"
+                              : "bg-amber-500/10 text-amber-600 border-amber-500/20"
+                          }`}
+                        >
+                          {item.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>

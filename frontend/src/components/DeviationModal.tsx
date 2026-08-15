@@ -42,7 +42,7 @@ export default function DeviationModal({
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`, // Attach the JWT
+            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({
             submitter_id: submitterId,
@@ -55,7 +55,6 @@ export default function DeviationModal({
         const result = await response.json();
         setAssessment(result.assessment);
       } else if (response.status === 401) {
-        // Handle expired or invalid token
         localStorage.removeItem("token");
         router.push("/");
       } else {
@@ -74,7 +73,6 @@ export default function DeviationModal({
     setSubmitterId("");
     setDeviationText("");
     setAssessment(null);
-
     onClose();
   };
 
@@ -85,78 +83,106 @@ export default function DeviationModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl overflow-hidden">
-        <div className="bg-gray-50 border-b px-6 py-4 flex justify-between items-center">
-          <h2 className="text-xl font-bold text-gray-800">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 transition-opacity">
+      <div className="bg-theme-card/95 backdrop-blur-2xl rounded-3xl shadow-2xl border border-theme-border/50 w-full max-w-2xl overflow-hidden transform transition-all duration-300">
+        <div className="bg-theme-body/50 border-b border-theme-border/50 px-8 py-6 flex justify-between items-center">
+          <h2 className="text-2xl font-extrabold text-theme-text tracking-tight">
             {assessment ? "AI Assessment Complete" : "Log New Deviation"}
           </h2>
           <button
             onClick={handleCancel}
-            className="text-gray-400 hover:text-gray-600"
+            className="text-theme-muted hover:text-theme-text bg-theme-card rounded-full p-2 border border-theme-border/50 shadow-sm transition-colors focus:outline-none"
           >
-            ✕
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
           </button>
         </div>
 
-        <div className="p-6">
+        <div className="p-8">
           {assessment ? (
-            <div className="space-y-4">
-              <div className="bg-blue-50 border border-blue-200 rounded p-4">
-                <h3 className="font-semibold text-blue-900 mb-2">
+            <div className="space-y-6">
+              {/* Premium AI Success Readout */}
+              <div className="bg-theme-accent/5 p-6 rounded-3xl border border-theme-accent/20 shadow-sm relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-4 opacity-10">
+                  <svg
+                    className="w-24 h-24 text-theme-accent"
+                    fill="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+
+                <h3 className="font-extrabold text-theme-accent text-lg flex items-center gap-2 mb-6 relative z-10">
+                  <div className="w-2 h-2 rounded-full bg-theme-accent animate-pulse"></div>
                   Deviation Logged Successfully
                 </h3>
-                <div className="grid grid-cols-2 gap-4 text-sm mb-4">
-                  <div>
-                    <span className="font-semibold text-gray-700">
-                      Category:{" "}
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm mb-6 relative z-10">
+                  <div className="bg-theme-card/80 backdrop-blur-sm p-4 rounded-2xl border border-theme-border/50 shadow-sm">
+                    <span className="block font-bold text-theme-muted uppercase tracking-wide text-xs mb-1">
+                      Category
                     </span>
-                    <span className="text-gray-900">
+                    <span className="text-theme-text font-medium text-base">
                       {assessment.root_cause_category}
                     </span>
                   </div>
-                  <div>
-                    <span className="font-semibold text-gray-700">
-                      Action:{" "}
-                    </span>
-                    <span className="text-gray-900">
-                      {assessment.required_action}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="font-semibold text-gray-700">
-                      Calculated RPN:{" "}
+
+                  <div className="bg-theme-card/80 backdrop-blur-sm p-4 rounded-2xl border border-theme-border/50 shadow-sm">
+                    <span className="block font-bold text-theme-muted uppercase tracking-wide text-xs mb-1">
+                      Calculated RPN
                     </span>
                     <span
-                      className={`font-bold ${(assessment.rpn ?? 0) > 50 ? "text-red-600" : "text-green-600"}`}
+                      className={`font-extrabold text-lg ${(assessment.rpn ?? 0) > 50 ? "text-red-500" : "text-green-500"}`}
                     >
                       {assessment.rpn}
                     </span>
                   </div>
+
+                  <div className="col-span-1 md:col-span-2 bg-theme-card/80 backdrop-blur-sm p-4 rounded-2xl border border-theme-border/50 shadow-sm">
+                    <span className="block font-bold text-theme-muted uppercase tracking-wide text-xs mb-1">
+                      Required Action
+                    </span>
+                    <span className="text-theme-text font-medium text-base">
+                      {assessment.required_action}
+                    </span>
+                  </div>
                 </div>
-                <div>
-                  <span className="font-semibold text-gray-700 block mb-1">
-                    QA Narrative:
+
+                <div className="relative z-10">
+                  <span className="block font-bold text-theme-muted uppercase tracking-wide text-xs mb-2 ml-1">
+                    QA Narrative Generated
                   </span>
-                  <p className="text-gray-800 bg-white p-3 border rounded text-sm whitespace-pre-wrap">
+                  <p className="text-theme-text bg-theme-card/80 backdrop-blur-sm p-5 rounded-2xl border border-theme-border/50 text-sm whitespace-pre-wrap leading-relaxed shadow-inner">
                     {assessment.qa_narrative}
                   </p>
                 </div>
               </div>
 
-              <div className="flex justify-end mt-6">
+              <div className="flex justify-end mt-8">
                 <button
                   onClick={handleAcknowledge}
-                  className="bg-blue-600 text-white font-medium py-2 px-6 rounded hover:bg-blue-700 transition-colors"
+                  className="bg-theme-primary text-white font-bold py-3 px-8 rounded-2xl hover:bg-theme-primaryHover shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5"
                 >
-                  OK
+                  Acknowledge & Close
                 </button>
               </div>
             </div>
           ) : (
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+            <form onSubmit={handleSubmit} className="space-y-5">
+              <div className="space-y-1">
+                <label className="block text-sm font-bold text-theme-muted ml-1">
                   Submitter ID
                 </label>
                 <input
@@ -164,13 +190,13 @@ export default function DeviationModal({
                   required
                   value={submitterId}
                   onChange={(e) => setSubmitterId(e.target.value)}
-                  className="w-full border border-gray-300 rounded p-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-4 py-3 bg-theme-body/50 border border-theme-border rounded-2xl focus:ring-2 focus:ring-theme-accent outline-none shadow-sm text-theme-text transition-all"
                   placeholder="e.g., QA-019"
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+              <div className="space-y-1">
+                <label className="block text-sm font-bold text-theme-muted ml-1">
                   Deviation Text
                 </label>
                 <textarea
@@ -178,26 +204,45 @@ export default function DeviationModal({
                   rows={5}
                   value={deviationText}
                   onChange={(e) => setDeviationText(e.target.value)}
-                  className="w-full border border-gray-300 rounded p-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-4 py-3 bg-theme-body/50 border border-theme-border rounded-2xl focus:ring-2 focus:ring-theme-accent outline-none shadow-sm text-theme-text resize-none transition-all"
                   placeholder="Describe the non-conformance event..."
                 />
               </div>
 
-              <div className="flex justify-end space-x-3 pt-4">
+              <div className="flex justify-end space-x-3 pt-6 mt-2 border-t border-theme-border/50">
                 <button
                   type="button"
                   onClick={handleCancel}
                   disabled={isLoading}
-                  className="px-4 py-2 text-gray-700 border border-gray-300 rounded hover:bg-gray-50"
+                  className="px-6 py-3 border border-theme-border rounded-2xl text-sm font-bold text-theme-text hover:bg-theme-body transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 disabled:opacity-50 flex items-center"
+                  className="bg-theme-primary text-white px-6 py-3 rounded-2xl text-sm font-bold hover:bg-theme-primaryHover disabled:opacity-50 shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5 flex items-center gap-2"
                 >
-                  {isLoading ? "Assessing..." : "Submit to AI Engine"}
+                  {isLoading ? (
+                    "Assessing via AI..."
+                  ) : (
+                    <>
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M13 10V3L4 14h7v7l9-11h-7z"
+                        />
+                      </svg>
+                      Submit to AI Engine
+                    </>
+                  )}
                 </button>
               </div>
             </form>

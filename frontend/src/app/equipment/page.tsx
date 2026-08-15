@@ -16,7 +16,6 @@ export default function CalibrationDashboard() {
   const [equipmentList, setEquipmentList] = useState<Equipment[]>([]);
   const [message, setMessage] = useState<string>("");
 
-  // Basic form state for the MVP
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
@@ -83,36 +82,36 @@ export default function CalibrationDashboard() {
         });
         fetchEquipment();
         setMessage("Equipment added successfully!");
+        setTimeout(() => setMessage(""), 4000);
       }
     } catch (error) {
       alert("Failed to add equipment");
     }
   };
 
-  // Helper function to color-code the dates
+  // Upgraded Premium Status Badges
   const getCalibrationStatusUI = (nextCalDateString: string) => {
     const nextCalDate = new Date(nextCalDateString);
     const today = new Date();
 
-    // Calculate difference in days
     const diffTime = nextCalDate.getTime() - today.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
     if (diffDays < 0) {
       return (
-        <span className="px-2 py-1 bg-red-100 text-red-800 font-bold rounded-full text-xs">
+        <span className="px-3 py-1 bg-red-500/10 text-red-500 border border-red-500/20 font-bold rounded-full text-xs shadow-sm">
           Overdue
         </span>
       );
     } else if (diffDays <= 30) {
       return (
-        <span className="px-2 py-1 bg-yellow-100 text-yellow-800 font-bold rounded-full text-xs">
+        <span className="px-3 py-1 bg-amber-500/10 text-amber-500 border border-amber-500/20 font-bold rounded-full text-xs shadow-sm">
           Due Soon ({diffDays}d)
         </span>
       );
     } else {
       return (
-        <span className="px-2 py-1 bg-green-100 text-green-800 font-bold rounded-full text-xs">
+        <span className="px-3 py-1 bg-green-500/10 text-green-500 border border-green-500/20 font-bold rounded-full text-xs shadow-sm">
           Compliant
         </span>
       );
@@ -120,66 +119,93 @@ export default function CalibrationDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen text-theme-text transition-colors duration-500">
       <Navbar />
-      <div className="max-w-6xl mx-auto mt-10 p-6 bg-white rounded-lg shadow-sm border border-gray-200">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold text-gray-800">
-            Calibration Management
-          </h1>
-          <button
-            onClick={() => setShowForm(!showForm)}
-            className="bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700 font-medium shadow-sm"
-          >
-            {showForm ? "Cancel" : "+ Add Equipment"}
-          </button>
-        </div>
 
-        {message && (
-          <div className="mb-4 p-3 bg-blue-50 text-blue-700 rounded-md text-sm">
-            {message}
+      <div className="max-w-7xl mx-auto mt-12 p-4 sm:p-8">
+        {/* PREMIUM GLASS CONTAINER */}
+        <div className="bg-theme-card/60 backdrop-blur-2xl rounded-3xl shadow-theme-card border border-theme-border/50 overflow-hidden transition-all duration-500">
+          {/* Header Section */}
+          <div className="p-8 border-b border-theme-border/50 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div>
+              <h1 className="text-3xl font-extrabold tracking-tight">
+                Calibration Management
+              </h1>
+              <p className="text-theme-muted mt-1 font-medium">
+                Track and maintain laboratory instrument compliance.
+              </p>
+            </div>
+            <button
+              onClick={() => setShowForm(!showForm)}
+              className="bg-theme-primary text-white px-6 py-3 rounded-2xl hover:bg-theme-primaryHover font-bold shadow-md hover:shadow-lg transition-all transform hover:-translate-y-1 flex items-center gap-2"
+            >
+              {showForm ? "Cancel Entry" : "+ Add Equipment"}
+            </button>
           </div>
-        )}
 
-        {/* Inline Form to Add Equipment */}
-        {showForm && (
-          <form
-            onSubmit={handleAddEquipment}
-            className="mb-8 p-4 bg-gray-50 border border-gray-200 rounded-lg grid grid-cols-2 gap-4"
-          >
-            <input
-              required
-              type="text"
-              placeholder="Equipment Name (e.g., pH Meter)"
-              value={formData.name}
-              onChange={(e) =>
-                setFormData({ ...formData, name: e.target.value })
-              }
-              className="px-3 py-2 border rounded-md"
-            />
-            <input
-              required
-              type="text"
-              placeholder="Serial Number"
-              value={formData.serial_number}
-              onChange={(e) =>
-                setFormData({ ...formData, serial_number: e.target.value })
-              }
-              className="px-3 py-2 border rounded-md"
-            />
-            <input
-              required
-              type="text"
-              placeholder="Location (e.g., Cleanroom 2)"
-              value={formData.location}
-              onChange={(e) =>
-                setFormData({ ...formData, location: e.target.value })
-              }
-              className="px-3 py-2 border rounded-md"
-            />
-            <div className="col-span-2 grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1">
+          {message && (
+            <div className="mx-8 mt-6 p-4 bg-theme-accent/10 text-theme-accent border border-theme-accent/20 rounded-2xl font-semibold flex items-center gap-3">
+              <div className="w-2 h-2 rounded-full bg-theme-accent animate-pulse"></div>
+              {message}
+            </div>
+          )}
+
+          {/* Elegant Form Component */}
+          {showForm && (
+            <form
+              onSubmit={handleAddEquipment}
+              className="m-8 p-6 bg-theme-body/50 border border-theme-border rounded-3xl grid grid-cols-1 md:grid-cols-2 gap-6 transition-all"
+            >
+              <div className="space-y-1">
+                <label className="block text-sm font-bold text-theme-muted ml-1">
+                  Equipment Name
+                </label>
+                <input
+                  required
+                  type="text"
+                  placeholder="e.g., pH Meter"
+                  value={formData.name}
+                  onChange={(e) =>
+                    setFormData({ ...formData, name: e.target.value })
+                  }
+                  className="w-full px-4 py-3 bg-theme-card border border-theme-border rounded-2xl focus:ring-2 focus:ring-theme-accent outline-none transition-all shadow-sm text-theme-text"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="block text-sm font-bold text-theme-muted ml-1">
+                  Serial Number
+                </label>
+                <input
+                  required
+                  type="text"
+                  placeholder="e.g., SN-102938"
+                  value={formData.serial_number}
+                  onChange={(e) =>
+                    setFormData({ ...formData, serial_number: e.target.value })
+                  }
+                  className="w-full px-4 py-3 bg-theme-card border border-theme-border rounded-2xl focus:ring-2 focus:ring-theme-accent outline-none transition-all shadow-sm text-theme-text"
+                />
+              </div>
+
+              <div className="space-y-1 col-span-1 md:col-span-2">
+                <label className="block text-sm font-bold text-theme-muted ml-1">
+                  Location
+                </label>
+                <input
+                  required
+                  type="text"
+                  placeholder="e.g., Cleanroom 2"
+                  value={formData.location}
+                  onChange={(e) =>
+                    setFormData({ ...formData, location: e.target.value })
+                  }
+                  className="w-full px-4 py-3 bg-theme-card border border-theme-border rounded-2xl focus:ring-2 focus:ring-theme-accent outline-none transition-all shadow-sm text-theme-text"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="block text-sm font-bold text-theme-muted ml-1">
                   Last Calibration Date
                 </label>
                 <input
@@ -192,11 +218,12 @@ export default function CalibrationDashboard() {
                       last_calibration_date: e.target.value,
                     })
                   }
-                  className="w-full px-3 py-2 border rounded-md"
+                  className="w-full px-4 py-3 bg-theme-card border border-theme-border rounded-2xl focus:ring-2 focus:ring-theme-accent outline-none transition-all shadow-sm text-theme-text"
                 />
               </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1">
+
+              <div className="space-y-1">
+                <label className="block text-sm font-bold text-theme-muted ml-1">
                   Next Calibration Due
                 </label>
                 <input
@@ -209,67 +236,103 @@ export default function CalibrationDashboard() {
                       next_calibration_date: e.target.value,
                     })
                   }
-                  className="w-full px-3 py-2 border rounded-md"
+                  className="w-full px-4 py-3 bg-theme-card border border-theme-border rounded-2xl focus:ring-2 focus:ring-theme-accent outline-none transition-all shadow-sm text-theme-text"
                 />
               </div>
-            </div>
-            <button
-              type="submit"
-              className="col-span-2 bg-purple-600 text-white py-2 rounded-md font-bold mt-2"
-            >
-              Save Equipment
-            </button>
-          </form>
-        )}
 
-        {/* Equipment Table */}
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200 text-sm">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left font-medium text-gray-500 uppercase">
-                  Equipment Name
-                </th>
-                <th className="px-6 py-3 text-left font-medium text-gray-500 uppercase">
-                  S/N
-                </th>
-                <th className="px-6 py-3 text-left font-medium text-gray-500 uppercase">
-                  Location
-                </th>
-                <th className="px-6 py-3 text-left font-medium text-gray-500 uppercase">
-                  Last Cal
-                </th>
-                <th className="px-6 py-3 text-left font-medium text-gray-500 uppercase">
-                  Next Cal
-                </th>
-                <th className="px-6 py-3 text-left font-medium text-gray-500 uppercase">
-                  Status
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {equipmentList.map((eq) => (
-                <tr key={eq.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 font-medium text-gray-900">
-                    {eq.name}
-                  </td>
-                  <td className="px-6 py-4 text-gray-500">
-                    {eq.serial_number}
-                  </td>
-                  <td className="px-6 py-4 text-gray-700">{eq.location}</td>
-                  <td className="px-6 py-4 text-gray-700">
-                    {eq.last_calibration_date}
-                  </td>
-                  <td className="px-6 py-4 text-gray-900 font-semibold">
-                    {eq.next_calibration_date}
-                  </td>
-                  <td className="px-6 py-4">
-                    {getCalibrationStatusUI(eq.next_calibration_date)}
-                  </td>
+              <div className="col-span-1 md:col-span-2 mt-2">
+                <button
+                  type="submit"
+                  className="w-full bg-theme-primary text-white py-4 rounded-2xl font-bold hover:bg-theme-primaryHover shadow-md transition-all flex justify-center items-center gap-2"
+                >
+                  <span>Save Equipment</span>
+                </button>
+              </div>
+            </form>
+          )}
+
+          {/* Redesigned Minimalist Table */}
+          <div className="overflow-x-auto p-4 sm:p-8">
+            <table className="min-w-full text-sm text-left border-collapse">
+              <thead>
+                <tr className="border-b-2 border-theme-border/50 text-theme-muted">
+                  <th className="pb-4 font-bold uppercase tracking-wider pl-4">
+                    Equipment Name
+                  </th>
+                  <th className="pb-4 font-bold uppercase tracking-wider">
+                    S/N
+                  </th>
+                  <th className="pb-4 font-bold uppercase tracking-wider">
+                    Location
+                  </th>
+                  <th className="pb-4 font-bold uppercase tracking-wider">
+                    Last Cal
+                  </th>
+                  <th className="pb-4 font-bold uppercase tracking-wider">
+                    Next Cal
+                  </th>
+                  <th className="pb-4 font-bold uppercase tracking-wider">
+                    Status
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-theme-border/30">
+                {equipmentList.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan={6}
+                      className="py-12 text-center text-theme-muted font-medium"
+                    >
+                      <div className="flex flex-col items-center justify-center gap-3">
+                        <svg
+                          className="w-12 h-12 opacity-50"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={1}
+                            d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"
+                          />
+                        </svg>
+                        No equipment registered yet.
+                      </div>
+                    </td>
+                  </tr>
+                ) : (
+                  equipmentList.map((eq) => (
+                    <tr
+                      key={eq.id}
+                      className="hover:bg-theme-body/50 transition-colors group"
+                    >
+                      <td className="py-5 pl-4 font-bold text-theme-text">
+                        {eq.name}
+                      </td>
+                      <td className="py-5">
+                        <span className="bg-theme-body px-2 py-1 rounded-lg border border-theme-border/50 font-mono text-xs text-theme-text shadow-sm">
+                          {eq.serial_number}
+                        </span>
+                      </td>
+                      <td className="py-5 text-theme-muted font-medium">
+                        {eq.location}
+                      </td>
+                      <td className="py-5 text-theme-muted">
+                        {eq.last_calibration_date}
+                      </td>
+                      <td className="py-5 text-theme-text font-bold">
+                        {eq.next_calibration_date}
+                      </td>
+                      <td className="py-5">
+                        {getCalibrationStatusUI(eq.next_calibration_date)}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>

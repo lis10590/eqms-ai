@@ -12,7 +12,6 @@ export default function ChangeControlsPage() {
   const fetchChangeControls = async () => {
     const token = localStorage.getItem("token");
 
-    // 1. Check if the token is missing or null before fetching
     if (!token || token === "null") {
       setError("You are not logged in. Please return to the login screen.");
       return;
@@ -40,85 +39,134 @@ export default function ChangeControlsPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen text-theme-text transition-colors duration-500">
       <Navbar />
 
-      <main className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">Change Controls</h1>
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 font-medium transition-colors"
-          >
-            + Initiate Change
-          </button>
-        </div>
-
-        {error && (
-          <div className="p-4 mb-4 text-red-700 bg-red-100 rounded">
-            {error}
+      <main className="max-w-7xl mx-auto mt-12 p-4 sm:p-8">
+        {/* PREMIUM GLASS CONTAINER */}
+        <div className="bg-theme-card/60 backdrop-blur-2xl rounded-3xl shadow-theme-card border border-theme-border/50 overflow-hidden transition-all duration-500">
+          {/* Header Section */}
+          <div className="p-8 border-b border-theme-border/50 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div>
+              <h1 className="text-3xl font-extrabold tracking-tight">
+                Change Controls
+              </h1>
+              <p className="text-theme-muted mt-1 font-medium">
+                Track, assess, and approve facility and process changes.
+              </p>
+            </div>
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="bg-theme-primary text-white px-6 py-3 rounded-2xl hover:bg-theme-primaryHover font-bold shadow-md hover:shadow-lg transition-all transform hover:-translate-y-1 flex items-center gap-2"
+            >
+              + Initiate Change
+            </button>
           </div>
-        )}
 
-        <div className="bg-white shadow overflow-hidden sm:rounded-lg">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  ID
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Title
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Classification
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Date
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {changeControls.map((cc: any) => (
-                <tr key={cc.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    CC-{cc.id}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    {cc.title}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span
-                      className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                      ${
-                        cc.classification === "Critical"
-                          ? "bg-red-100 text-red-800"
-                          : cc.classification === "Major"
-                            ? "bg-orange-100 text-orange-800"
-                            : "bg-green-100 text-green-800"
-                      }`}
-                    >
-                      {cc.classification}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {cc.status}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {cc.created_at}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          {changeControls.length === 0 && (
-            <div className="p-6 text-center text-gray-500">
-              No Change Controls found.
+          {error && (
+            <div className="mx-8 mt-6 p-4 bg-red-500/10 text-red-500 border border-red-500/20 rounded-2xl font-semibold flex items-center gap-3">
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+              {error}
             </div>
           )}
+
+          {/* Redesigned Minimalist Table */}
+          <div className="overflow-x-auto p-4 sm:p-8">
+            <table className="min-w-full text-sm text-left border-collapse">
+              <thead>
+                <tr className="border-b-2 border-theme-border/50 text-theme-muted">
+                  <th className="pb-4 font-bold uppercase tracking-wider pl-4">
+                    ID
+                  </th>
+                  <th className="pb-4 font-bold uppercase tracking-wider">
+                    Title
+                  </th>
+                  <th className="pb-4 font-bold uppercase tracking-wider">
+                    Classification
+                  </th>
+                  <th className="pb-4 font-bold uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th className="pb-4 font-bold uppercase tracking-wider">
+                    Date
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-theme-border/30">
+                {changeControls.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan={5}
+                      className="py-12 text-center text-theme-muted font-medium"
+                    >
+                      <div className="flex flex-col items-center justify-center gap-3">
+                        <svg
+                          className="w-12 h-12 opacity-50"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={1}
+                            d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"
+                          />
+                        </svg>
+                        No Change Controls found. Initiate a new change to
+                        begin.
+                      </div>
+                    </td>
+                  </tr>
+                ) : (
+                  changeControls.map((cc: any) => (
+                    <tr
+                      key={cc.id}
+                      className="hover:bg-theme-body/50 transition-colors group"
+                    >
+                      <td className="py-5 pl-4">
+                        <span className="bg-theme-body px-2 py-1 rounded-lg border border-theme-border/50 font-mono text-xs text-theme-text shadow-sm">
+                          CC-{cc.id}
+                        </span>
+                      </td>
+                      <td className="py-5 font-bold text-theme-text">
+                        {cc.title}
+                      </td>
+                      <td className="py-5">
+                        <span
+                          className={`px-3 py-1 inline-flex text-xs font-bold rounded-full border shadow-sm ${
+                            cc.classification === "Critical"
+                              ? "bg-red-500/10 text-red-500 border-red-500/20"
+                              : cc.classification === "Major"
+                                ? "bg-amber-500/10 text-amber-500 border-amber-500/20"
+                                : "bg-green-500/10 text-green-500 border-green-500/20"
+                          }`}
+                        >
+                          {cc.classification}
+                        </span>
+                      </td>
+                      <td className="py-5 text-theme-muted font-medium">
+                        {cc.status}
+                      </td>
+                      <td className="py-5 text-theme-muted">{cc.created_at}</td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </main>
 

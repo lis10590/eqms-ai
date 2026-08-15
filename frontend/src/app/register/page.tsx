@@ -15,7 +15,6 @@ export default function RegisterPage() {
     setError("");
     setMessage("");
 
-    // Retrieve the token saved during login
     const token = localStorage.getItem("token");
 
     if (!token) {
@@ -30,7 +29,7 @@ export default function RegisterPage() {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`, // This is where the JWT is attached!
+            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({ username, password, role }),
         },
@@ -51,73 +50,112 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* 1. Place the Navbar at the very top of the page */}
+    <div className="min-h-screen text-theme-text transition-colors duration-500">
       <Navbar />
 
-      {/* 2. Wrap the form in a container that fills the remaining screen height and centers the content */}
-      <div className="flex min-h-[calc(100vh-64px)] items-center justify-center p-4">
-        <div className="w-full max-w-md p-8 space-y-6 bg-white rounded-lg shadow-md border border-gray-200">
-          <h2 className="text-2xl font-bold text-center text-gray-900">
-            Create New User
-          </h2>
+      <div className="flex min-h-[calc(100vh-80px)] items-center justify-center p-4">
+        {/* PREMIUM GLASS CONTAINER */}
+        <div className="w-full max-w-md p-8 bg-theme-card/60 backdrop-blur-2xl rounded-3xl shadow-theme-card border border-theme-border/50 transform transition-all duration-500 relative overflow-hidden">
+          {/* Subtle Decorative Background Element */}
+          <div className="absolute -top-12 -right-12 w-32 h-32 bg-theme-accent opacity-10 rounded-full blur-3xl pointer-events-none"></div>
+
+          <div className="text-center mb-8 relative z-10">
+            <h2 className="text-3xl font-extrabold tracking-tight text-theme-text">
+              Create New User
+            </h2>
+            <p className="text-theme-muted mt-2 font-medium text-sm">
+              Provision system access and assign roles.
+            </p>
+          </div>
 
           {error && (
-            <div className="p-3 text-sm text-red-700 bg-red-100 rounded">
+            <div className="mb-6 p-4 bg-red-500/10 text-red-500 border border-red-500/20 rounded-2xl font-semibold text-sm flex items-center gap-2">
+              <svg
+                className="w-5 h-5 flex-shrink-0"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
               {error}
             </div>
           )}
+
           {message && (
-            <div className="p-3 text-sm text-green-700 bg-green-100 rounded">
+            <div className="mb-6 p-4 bg-green-500/10 text-green-500 border border-green-500/20 rounded-2xl font-semibold text-sm flex items-center gap-2">
+              <svg
+                className="w-5 h-5 flex-shrink-0"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M5 13l4 4L19 7"
+                />
+              </svg>
               {message}
             </div>
           )}
 
-          <form onSubmit={handleRegister} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
+          <form onSubmit={handleRegister} className="space-y-5 relative z-10">
+            <div className="space-y-1">
+              <label className="block text-sm font-bold text-theme-muted ml-1">
                 Username
               </label>
               <input
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                className="w-full p-2 mt-1 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-4 py-3 bg-theme-body/50 border border-theme-border rounded-2xl focus:ring-2 focus:ring-theme-accent outline-none shadow-sm text-theme-text transition-all"
                 required
+                placeholder="Enter username"
               />
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
+
+            <div className="space-y-1">
+              <label className="block text-sm font-bold text-theme-muted ml-1">
                 Password
               </label>
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full p-2 mt-1 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-4 py-3 bg-theme-body/50 border border-theme-border rounded-2xl focus:ring-2 focus:ring-theme-accent outline-none shadow-sm text-theme-text transition-all"
                 required
+                placeholder="••••••••"
               />
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Role
+
+            <div className="space-y-1">
+              <label className="block text-sm font-bold text-theme-muted ml-1">
+                Role Assignment
               </label>
               <select
                 value={role}
                 onChange={(e) => setRole(e.target.value)}
-                className="w-full p-2 mt-1 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 bg-white"
+                className="w-full px-4 py-3 bg-theme-body/50 border border-theme-border rounded-2xl focus:ring-2 focus:ring-theme-accent outline-none shadow-sm text-theme-text transition-all cursor-pointer"
               >
                 <option value="qa_user">QA User</option>
-                <option value="admin">Admin</option>
+                <option value="admin">System Administrator</option>
                 <option value="manufacturing_user">Manufacturing User</option>
-                <option value="qc_user">QC User</option>
+                <option value="qc_user">QC Analyst</option>
               </select>
             </div>
+
             <button
               type="submit"
-              className="w-full py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors font-medium"
+              className="w-full mt-4 py-4 text-white bg-theme-primary rounded-2xl hover:bg-theme-primaryHover transition-all font-bold shadow-md hover:shadow-lg transform hover:-translate-y-1"
             >
-              Register User
+              Provision Account
             </button>
           </form>
         </div>

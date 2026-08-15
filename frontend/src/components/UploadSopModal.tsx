@@ -6,7 +6,6 @@ interface UploadSopModalProps {
   onSuccess: () => void;
 }
 
-// 1. Define the Reviewer interface
 interface Reviewer {
   id: number;
   username: string;
@@ -22,14 +21,12 @@ export default function UploadSopModal({
   const [version, setVersion] = useState("");
   const [file, setFile] = useState<File | null>(null);
 
-  // 2. Add state for reviewers and the selected selection
   const [reviewers, setReviewers] = useState<Reviewer[]>([]);
   const [selectedReviewer, setSelectedReviewer] = useState("");
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // 3. Fetch the list of reviewers when the modal opens
   useEffect(() => {
     if (isOpen) {
       const fetchReviewers = async () => {
@@ -80,7 +77,6 @@ export default function UploadSopModal({
     formData.append("document_number", documentNumber);
     formData.append("title", title);
     formData.append("version", version);
-    // 4. Append the selected reviewer to the payload
     formData.append("reviewer_id", selectedReviewer);
     formData.append("file", file);
 
@@ -122,77 +118,95 @@ export default function UploadSopModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-6">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold text-gray-800">Upload New SOP</h2>
+    // Beautiful blurred backdrop
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm transition-opacity">
+      {/* Floating Glass Modal */}
+      <div className="bg-theme-card/95 backdrop-blur-2xl rounded-3xl shadow-2xl border border-theme-border/50 w-full max-w-md p-8 transform transition-all duration-300">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-extrabold text-theme-text tracking-tight">
+            Upload New SOP
+          </h2>
           <button
             onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 font-bold text-xl"
+            className="text-theme-muted hover:text-theme-text bg-theme-body rounded-full p-2 transition-colors focus:outline-none"
           >
-            &times;
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
           </button>
         </div>
 
         {error && (
-          <div className="mb-4 p-3 bg-red-50 text-red-700 rounded text-sm border border-red-200">
+          <div className="mb-6 p-4 bg-red-500/10 text-red-500 border border-red-500/20 rounded-2xl font-semibold text-sm">
             {error}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {/* ... Keep Document Number, Title, and Version inputs exactly the same ... */}
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <div className="space-y-1">
+            <label className="block text-sm font-bold text-theme-muted ml-1">
               Document Number
             </label>
             <input
               type="text"
               required
+              placeholder="e.g., SOP-001"
               value={documentNumber}
               onChange={(e) => setDocumentNumber(e.target.value)}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
+              className="w-full px-4 py-3 bg-theme-card border border-theme-border rounded-2xl focus:ring-2 focus:ring-theme-accent focus:border-transparent outline-none transition-all shadow-sm text-theme-text"
             />
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
+
+          <div className="space-y-1">
+            <label className="block text-sm font-bold text-theme-muted ml-1">
               Title
             </label>
             <input
               type="text"
               required
+              placeholder="Document Title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
+              className="w-full px-4 py-3 bg-theme-card border border-theme-border rounded-2xl focus:ring-2 focus:ring-theme-accent focus:border-transparent outline-none transition-all shadow-sm text-theme-text"
             />
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
+
+          <div className="space-y-1">
+            <label className="block text-sm font-bold text-theme-muted ml-1">
               Version
             </label>
             <input
               type="text"
               required
+              placeholder="1.0"
               value={version}
               onChange={(e) => setVersion(e.target.value)}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"
+              className="w-full px-4 py-3 bg-theme-card border border-theme-border rounded-2xl focus:ring-2 focus:ring-theme-accent focus:border-transparent outline-none transition-all shadow-sm text-theme-text"
             />
           </div>
 
-          {/* 5. Add the Reviewer Dropdown */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
+          <div className="space-y-1">
+            <label className="block text-sm font-bold text-theme-muted ml-1">
               Assign to Reviewer
             </label>
             <select
               required
               value={selectedReviewer}
               onChange={(e) => setSelectedReviewer(e.target.value)}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-4 py-3 bg-theme-card border border-theme-border rounded-2xl focus:ring-2 focus:ring-theme-accent focus:border-transparent outline-none transition-all shadow-sm text-theme-text cursor-pointer"
             >
               <option value="" disabled>
-                Select a person...
+                Select personnel...
               </option>
               {reviewers.map((reviewer) => (
                 <option key={reviewer.id} value={reviewer.id}>
@@ -202,8 +216,8 @@ export default function UploadSopModal({
             </select>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
+          <div className="space-y-1">
+            <label className="block text-sm font-bold text-theme-muted ml-1">
               PDF Document
             </label>
             <input
@@ -213,24 +227,24 @@ export default function UploadSopModal({
               onChange={(e) =>
                 setFile(e.target.files ? e.target.files[0] : null)
               }
-              className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700"
+              className="w-full px-4 py-2 bg-theme-card border border-theme-border rounded-2xl text-sm text-theme-muted file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-bold file:bg-theme-accent/10 file:text-theme-accent hover:file:bg-theme-accent/20 transition-all cursor-pointer"
             />
           </div>
 
-          <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
+          <div className="flex justify-end space-x-3 pt-6 mt-2">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+              className="px-6 py-3 border border-theme-border rounded-2xl text-sm font-bold text-theme-text hover:bg-theme-body transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 disabled:bg-blue-300"
+              className="px-6 py-3 bg-theme-primary text-white rounded-2xl text-sm font-bold hover:bg-theme-primaryHover shadow-md disabled:opacity-50 disabled:cursor-not-allowed transition-all transform hover:-translate-y-0.5"
             >
-              {loading ? "Uploading..." : "Upload"}
+              {loading ? "Encrypting & Uploading..." : "Upload Document"}
             </button>
           </div>
         </form>
