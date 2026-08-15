@@ -71,7 +71,7 @@ export default function RegisterPage() {
           {error && (
             <div className="mb-6 p-4 bg-red-500/10 text-red-500 border border-red-500/20 rounded-2xl font-semibold text-sm flex items-center gap-2">
               <svg
-                className="w-5 h-5 flex-shrink-0"
+                className="w-5 h-5 shrink-0"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -90,7 +90,7 @@ export default function RegisterPage() {
           {message && (
             <div className="mb-6 p-4 bg-green-500/10 text-green-500 border border-green-500/20 rounded-2xl font-semibold text-sm flex items-center gap-2">
               <svg
-                className="w-5 h-5 flex-shrink-0"
+                className="w-5 h-5 shrink-0"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"

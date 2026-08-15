@@ -255,7 +255,7 @@ export default function ChangeControlModal({
                         className="flex items-center text-sm font-medium text-theme-text"
                       >
                         <svg
-                          className="w-4 h-4 text-theme-accent mr-2 flex-shrink-0"
+                          className="w-4 h-4 text-theme-accent mr-2 shrink-0"
                           fill="none"
                           stroke="currentColor"
                           viewBox="0 0 24 24"
