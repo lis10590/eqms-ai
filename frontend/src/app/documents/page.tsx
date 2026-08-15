@@ -31,7 +31,7 @@ export default function DocumentDashboard() {
       }
 
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:5000"}/documents?view=${viewType}`,
+        `${process.env.NEXT_PUBLIC_API_URL}/documents?view=${viewType}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -65,7 +65,7 @@ export default function DocumentDashboard() {
       }
 
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:5000"}/view_document/${versionId}`,
+        `${process.env.NEXT_PUBLIC_API_URL}/view_document/${versionId}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         },
@@ -95,7 +95,7 @@ export default function DocumentDashboard() {
       }
 
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:5000"}/approve_document/${versionId}`,
+        `${process.env.NEXT_PUBLIC_API_URL}/approve_document/${versionId}`,
         {
           method: "PUT",
           headers: { Authorization: `Bearer ${token}` },

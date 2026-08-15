@@ -35,7 +35,7 @@ export default function UploadSopModal({
           if (!token) return;
 
           const response = await fetch(
-            `${process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:5000"}/reviewers`,
+            `${process.env.NEXT_PUBLIC_API_URL}/reviewers`,
             {
               headers: { Authorization: `Bearer ${token}` },
             },
@@ -90,7 +90,7 @@ export default function UploadSopModal({
       }
 
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:5000"}/upload_sop`,
+        `${process.env.NEXT_PUBLIC_API_URL}/upload_sop`,
         {
           method: "POST",
           headers: { Authorization: `Bearer ${token}` },

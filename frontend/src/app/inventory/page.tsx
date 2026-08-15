@@ -38,7 +38,7 @@ export default function InventoryDashboard() {
       }
 
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:5000"}/inventory`,
+        `${process.env.NEXT_PUBLIC_API_URL}/inventory`,
         {
           headers: { Authorization: `Bearer ${token}` },
         },
@@ -64,7 +64,7 @@ export default function InventoryDashboard() {
     try {
       const token = localStorage.getItem("token");
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:5000"}/inventory`,
+        `${process.env.NEXT_PUBLIC_API_URL}/inventory`,
         {
           method: "POST",
           headers: {

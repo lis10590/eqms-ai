@@ -34,7 +34,7 @@ export default function CalibrationDashboard() {
       }
 
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:5000"}/equipment`,
+        `${process.env.NEXT_PUBLIC_API_URL}/equipment`,
         {
           headers: { Authorization: `Bearer ${token}` },
         },
