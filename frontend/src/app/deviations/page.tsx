@@ -28,7 +28,6 @@ export default function Dashboard() {
   const fetchDeviations = async () => {
     try {
       const token = localStorage.getItem("token");
-      console.log("Token:", token); // Debugging line to check the token
 
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/deviations`, {
         headers: {

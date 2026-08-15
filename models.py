@@ -100,8 +100,19 @@ class DocumentVersion(db.Model):
     # Foreign Keys
     document_id = db.Column(db.Integer, db.ForeignKey('documents.id'), nullable=False)
     uploader_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    reviewer_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
     
     uploaded_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
     # Relationship to the user who uploaded it
-    uploader = db.relationship('User', backref=db.backref('uploaded_versions', lazy=True))
+    uploader = db.relationship(
+        'User', 
+        foreign_keys='DocumentVersion.uploader_id', 
+        backref='uploaded_versions'
+    )
+    
+    reviewer = db.relationship(
+        'User', 
+        foreign_keys='DocumentVersion.reviewer_id', 
+        backref='assigned_reviews'
+    )

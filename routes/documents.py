@@ -4,7 +4,7 @@ from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from werkzeug.utils import secure_filename
 import uuid
-from models import db, Document, DocumentVersion
+from models import db, Document, DocumentVersion, User
 
 documents_bp = Blueprint('documents', __name__)
 
@@ -30,6 +30,7 @@ def upload_sop():
     document_number = request.form.get('document_number') # e.g., SOP-001
     title = request.form.get('title')
     version = request.form.get('version')
+    reviewer_id = request.form.get('reviewer_id')
     
     if not document_number or not version:
         return jsonify({"error": "Document number and version are required"}), 400
@@ -69,7 +70,8 @@ def upload_sop():
             file_key=s3_key,
             status='Draft', # All new uploads start in Draft status for review
             document_id=doc.id,
-            uploader_id=current_user_id
+            uploader_id=current_user_id,
+            reviewer_id=reviewer_id
         )
         
         db.session.add(new_version)
@@ -147,12 +149,26 @@ def approve_document(version_id):
 @documents_bp.route('/documents', methods=['GET'])
 @jwt_required()
 def get_documents():
-    """Fetches documents, filtered by status if provided."""
-    status_filter = request.args.get('status') # e.g., ?status=Authorized
+    # 1. Identify the current logged-in user securely from their token
+    current_user_id = get_jwt_identity() 
+    
+    # 2. Get the requested view from the frontend
+    view_filter = request.args.get('view') 
     
     query = DocumentVersion.query
-    if status_filter:
-        query = query.filter_by(status=status_filter)
+    
+    # 3. Apply the specific filters based on the view requested
+    if view_filter == 'my_reviews':
+        # Show ONLY drafts specifically assigned to ME
+        query = query.filter_by(reviewer_id=current_user_id, status='Draft')
+        
+    elif view_filter == 'my_uploads':
+        # Show documents I uploaded (so I can track their status)
+        query = query.filter_by(uploader_id=current_user_id)
+        
+    else:
+        # Default view: Just show all Authorized documents
+        query = query.filter_by(status='Authorized')
         
     versions = query.all()
     
@@ -164,7 +180,21 @@ def get_documents():
             "title": v.document.title,
             "version": v.version_number,
             "status": v.status,
-            "uploaded_at": v.uploaded_at.strftime("%Y-%m-%d %H:%M")
+            "uploaded_at": v.uploaded_at.strftime("%Y-%m-%d %H:%M"),
+            "reviewer": v.reviewer.username if v.reviewer else "Unassigned" 
         })
         
+    return jsonify(results), 200
+
+@documents_bp.route('/reviewers', methods=['GET'])
+@jwt_required()
+def get_reviewers():
+    """Fetches a list of users who can be assigned as reviewers."""
+    # Assuming you want anyone with a 'qa_manager' role, or just fetch all users if you don't have roles yet.
+    # For now, let's fetch all users to keep it simple, or filter by role if you have that set up:
+    reviewers = User.query.all() 
+    
+    # If you haven't assigned roles in your DB yet, just use: reviewers = User.query.all()
+
+    results = [{"id": r.id, "username": r.username} for r in reviewers]
     return jsonify(results), 200
