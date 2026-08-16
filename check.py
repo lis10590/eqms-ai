@@ -1,10 +1,14 @@
 from google import genai
+import os
+from dotenv import load_dotenv
 
-# Make sure your GEMINI_API_KEY environment variable is set
-client = genai.Client(api_key="AQ.Ab8RN6LlJyxwszBgGTDJy4F0JAqOtlLzQdaQ2bxwWKxvXEFVqQ")
+# Load your .env file so the API key is available
+load_dotenv()
 
-print("Available Models for Generate Content:")
+# Initialize the new SDK client
+client = genai.Client() 
+
+print("Available models:")
+# Fetch and print all available model names
 for model in client.models.list():
-    # Filter to show only models that support content generation
-    if 'generateContent' in model.supported_actions:
-        print(model.name)
+    print(model.name)

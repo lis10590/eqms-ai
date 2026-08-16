@@ -7,11 +7,13 @@ export default function LoginPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false); // Added loading state
   const router = useRouter();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setIsLoading(true); // Start loading
 
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/login`, {
@@ -34,6 +36,7 @@ export default function LoginPage() {
       router.push("/deviations");
     } catch (err: any) {
       setError(err.message);
+      setIsLoading(false); // Stop loading only if there's an error (if successful, we redirect)
     }
   };
 
@@ -100,6 +103,7 @@ export default function LoginPage() {
               className="w-full px-5 py-4 bg-theme-body/50 border border-theme-border rounded-2xl focus:ring-2 focus:ring-theme-accent outline-none shadow-sm text-theme-text transition-all"
               required
               placeholder="Enter your username"
+              disabled={isLoading}
             />
           </div>
 
@@ -114,27 +118,31 @@ export default function LoginPage() {
               className="w-full px-5 py-4 bg-theme-body/50 border border-theme-border rounded-2xl focus:ring-2 focus:ring-theme-accent outline-none shadow-sm text-theme-text transition-all"
               required
               placeholder="••••••••"
+              disabled={isLoading}
             />
           </div>
 
           <button
             type="submit"
-            className="w-full mt-8 py-4 text-white bg-theme-primary rounded-2xl hover:bg-theme-primaryHover transition-all font-bold text-lg shadow-md hover:shadow-lg transform hover:-translate-y-1 flex items-center justify-center gap-2"
+            disabled={isLoading}
+            className="w-full mt-8 py-4 text-white bg-theme-primary rounded-2xl hover:bg-theme-primaryHover transition-all font-bold text-lg shadow-md hover:shadow-lg transform hover:-translate-y-1 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Sign In
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M14 5l7 7m0 0l-7 7m7-7H3"
-              />
-            </svg>
+            {isLoading ? "Authenticating..." : "Sign In"}
+            {!isLoading && (
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M14 5l7 7m0 0l-7 7m7-7H3"
+                />
+              </svg>
+            )}
           </button>
         </form>
       </div>

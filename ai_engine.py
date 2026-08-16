@@ -56,7 +56,7 @@ def assess_deviation(deviation_text: str, fmea_criteria_text: str):
 
     try:
         response = client.models.generate_content(
-            model='gemini-flash-latest',
+            model='gemini-3.6-flash',
             contents=deviation_text,
             config=types.GenerateContentConfig(
                 system_instruction=system_instruction,
@@ -122,7 +122,7 @@ def assess_change_control(title: str, current_state: str, proposed_state: str, j
 
     try:
         response = client.models.generate_content(
-            model='gemini-flash-latest',
+            model='gemini-3.6-flash',
             contents=prompt,
             config=types.GenerateContentConfig(
                 system_instruction=system_instruction,
