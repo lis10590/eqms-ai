@@ -2,12 +2,17 @@
 
 import { useEffect, useState } from "react";
 import Navbar from "@/components/Navbar";
-import ChangeControlModal from "@/components/ChangeControlModal"; // Adjust path if needed
+import ChangeControlModal from "@/components/ChangeControlModal";
+import ChangeControlDetailsModal from "@/components/ChangeControlDetailsModal";
 
 export default function ChangeControlsPage() {
   const [changeControls, setChangeControls] = useState([]);
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [error, setError] = useState("");
+
+  // Separate states for the two different modals
+  const [isNewModalOpen, setIsNewModalOpen] = useState(false);
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [selectedChange, setSelectedChange] = useState<any | null>(null);
 
   const fetchChangeControls = async () => {
     const token = localStorage.getItem("token");
@@ -29,6 +34,12 @@ export default function ChangeControlsPage() {
 
       const data = await response.json();
       setChangeControls(data);
+
+      // Keep selected change control in sync if modal is currently open
+      if (selectedChange) {
+        const updated = data.find((cc: any) => cc.id === selectedChange.id);
+        if (updated) setSelectedChange(updated);
+      }
     } catch (err: any) {
       setError(err.message);
     }
@@ -37,6 +48,11 @@ export default function ChangeControlsPage() {
   useEffect(() => {
     fetchChangeControls();
   }, []);
+
+  const handleRowClick = (cc: any) => {
+    setSelectedChange(cc);
+    setIsDetailsModalOpen(true);
+  };
 
   return (
     <div className="min-h-screen text-theme-text transition-colors duration-500">
@@ -56,7 +72,7 @@ export default function ChangeControlsPage() {
               </p>
             </div>
             <button
-              onClick={() => setIsModalOpen(true)}
+              onClick={() => setIsNewModalOpen(true)}
               className="bg-theme-primary text-white px-6 py-3 rounded-2xl hover:bg-theme-primaryHover font-bold shadow-md hover:shadow-lg transition-all transform hover:-translate-y-1 flex items-center gap-2"
             >
               + Initiate Change
@@ -134,7 +150,8 @@ export default function ChangeControlsPage() {
                   changeControls.map((cc: any) => (
                     <tr
                       key={cc.id}
-                      className="hover:bg-theme-body/50 transition-colors group"
+                      onClick={() => handleRowClick(cc)}
+                      className="hover:bg-theme-body/50 transition-colors group cursor-pointer"
                     >
                       <td className="py-5 pl-4">
                         <span className="bg-theme-body px-2 py-1 rounded-lg border border-theme-border/50 font-mono text-xs text-theme-text shadow-sm">
@@ -170,11 +187,22 @@ export default function ChangeControlsPage() {
         </div>
       </main>
 
+      {/* Modal for Creating a NEW Change Control */}
       <ChangeControlModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        isOpen={isNewModalOpen}
+        onClose={() => setIsNewModalOpen(false)}
         onSuccess={fetchChangeControls}
       />
+
+      {/* Modal for Viewing/Editing an EXISTING Change Control */}
+      {selectedChange && (
+        <ChangeControlDetailsModal
+          isOpen={isDetailsModalOpen}
+          onClose={() => setIsDetailsModalOpen(false)}
+          changeControl={selectedChange}
+          onSuccess={fetchChangeControls}
+        />
+      )}
     </div>
   );
 }

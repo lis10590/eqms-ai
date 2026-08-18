@@ -32,6 +32,11 @@ class Deviation(db.Model):
     required_action = db.Column(db.String(50), nullable=True)
     rpn = db.Column(db.Integer, nullable=True)
     qa_narrative = db.Column(db.Text, nullable=True)
+    status = db.Column(db.String(50), default='Open', nullable=False) 
+    investigation_root_cause = db.Column(db.Text, nullable=True) # User-typed detailed analysis
+    capa = db.Column(db.Text, nullable=True) # Corrective and Preventive Actions
+    closed_at = db.Column(db.DateTime, nullable=True) # Timestamp of when it was completed
+    
 
 class AuditLog(db.Model):
     __tablename__ = 'audit_logs'

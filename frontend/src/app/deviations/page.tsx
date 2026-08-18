@@ -36,6 +36,11 @@ export default function Dashboard() {
       if (res.ok) {
         const data = await res.json();
         setDeviations(data);
+        // Keep selected deviation in sync if modal is currently open
+        if (selectedDeviation) {
+          const updated = data.find((d: any) => d.id === selectedDeviation.id);
+          if (updated) setSelectedDeviation(updated);
+        }
       } else if (res.status === 401) {
         localStorage.removeItem("token");
         router.push("/");
@@ -52,6 +57,28 @@ export default function Dashboard() {
   const handleRowClick = (deviation: any) => {
     setSelectedDeviation(deviation);
     setIsDetailsModalOpen(true);
+  };
+
+  const renderStatusBadge = (status: string) => {
+    if (status === "Completed") {
+      return (
+        <span className="px-3 py-1 inline-flex text-xs font-bold rounded-full border shadow-sm bg-green-500/10 text-green-600 border-green-500/20">
+          Completed
+        </span>
+      );
+    }
+    if (status === "Under Investigation") {
+      return (
+        <span className="px-3 py-1 inline-flex text-xs font-bold rounded-full border shadow-sm bg-red-500/10 text-red-500 border-red-500/20 animate-pulse">
+          Under Investigation
+        </span>
+      );
+    }
+    return (
+      <span className="px-3 py-1 inline-flex text-xs font-bold rounded-full border shadow-sm bg-amber-500/10 text-amber-600 border-amber-500/20">
+        Open
+      </span>
+    );
   };
 
   return (
@@ -95,6 +122,9 @@ export default function Dashboard() {
                     RPN
                   </th>
                   <th className="pb-4 font-bold uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th className="pb-4 font-bold uppercase tracking-wider">
                     Date
                   </th>
                 </tr>
@@ -103,7 +133,7 @@ export default function Dashboard() {
                 {deviations.length === 0 ? (
                   <tr>
                     <td
-                      colSpan={5}
+                      colSpan={6}
                       className="py-12 text-center text-theme-muted font-medium"
                     >
                       <div className="flex flex-col items-center justify-center gap-3">
@@ -127,13 +157,13 @@ export default function Dashboard() {
                 ) : (
                   deviations.map((dev: any, index: number) => (
                     <tr
-                      key={index}
+                      key={dev.id || index}
                       className="hover:bg-theme-body/50 transition-colors cursor-pointer group"
                       onClick={() => handleRowClick(dev)}
                     >
                       <td className="py-5 pl-4">
                         <span className="bg-theme-body px-2 py-1 rounded-lg border border-theme-border/50 font-mono text-xs font-bold text-theme-text shadow-sm group-hover:bg-theme-card transition-colors">
-                          {dev.id || `DEV-${index + 1}`}
+                          DEV-{dev.id}
                         </span>
                       </td>
                       <td className="py-5 font-medium text-theme-text">
@@ -152,6 +182,9 @@ export default function Dashboard() {
                         >
                           {dev.rpn}
                         </span>
+                      </td>
+                      <td className="py-5">
+                        {renderStatusBadge(dev.status || "Open")}
                       </td>
                       <td className="py-5 text-theme-muted font-medium">
                         {formatDateTime(dev.created_at)}
