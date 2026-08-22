@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import UploadSopModal from "../../components/UploadSopModal";
+import SopChatModal from "@/components/SopChatModal"; // NEW: Import the Chat Modal
 import Navbar from "@/components/Navbar";
 
 interface DocumentVersion {
@@ -20,6 +21,11 @@ export default function DocumentDashboard() {
   const [documents, setDocuments] = useState<DocumentVersion[]>([]);
   const [message, setMessage] = useState<string>("");
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // --- NEW: Chat Modal States ---
+  const [isChatModalOpen, setIsChatModalOpen] = useState(false);
+  const [selectedSopId, setSelectedSopId] = useState<number | null>(null);
+  const [selectedSopTitle, setSelectedSopTitle] = useState("");
 
   const fetchDocuments = async (viewType: string) => {
     try {
@@ -113,6 +119,13 @@ export default function DocumentDashboard() {
     } catch (error) {
       alert("Failed to approve document due to a network error");
     }
+  };
+
+  // --- NEW: Function to open the chat ---
+  const handleOpenChat = (id: number, title: string) => {
+    setSelectedSopId(id);
+    setSelectedSopTitle(title);
+    setIsChatModalOpen(true);
   };
 
   return (
@@ -263,12 +276,36 @@ export default function DocumentDashboard() {
                       <td className="py-5 text-theme-muted font-medium">
                         {doc.reviewer}
                       </td>
-                      <td className="py-5 text-right space-x-4 pr-4">
+
+                      <td className="py-5 text-right space-x-4 pr-4 whitespace-nowrap">
                         <button
                           onClick={() => handleViewPdf(doc.version_id)}
                           className="text-theme-accent hover:text-theme-primary font-bold transition-colors"
                         >
                           View PDF
+                        </button>
+
+                        {/* NEW: ASK AI BUTTON IS INJECTED HERE */}
+                        <button
+                          onClick={() =>
+                            handleOpenChat(doc.version_id, doc.title)
+                          }
+                          className="text-theme-accent hover:text-theme-primary font-bold transition-colors inline-flex items-center gap-1"
+                        >
+                          <svg
+                            className="w-4 h-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
+                            />
+                          </svg>
+                          Ask AI
                         </button>
 
                         {activeTab === "my_reviews" && (
@@ -298,6 +335,16 @@ export default function DocumentDashboard() {
             setTimeout(() => setMessage(""), 4000);
           }}
         />
+
+        {/* NEW: THE CHAT MODAL RENDERER */}
+        {selectedSopId && (
+          <SopChatModal
+            isOpen={isChatModalOpen}
+            onClose={() => setIsChatModalOpen(false)}
+            sopId={selectedSopId}
+            sopTitle={selectedSopTitle}
+          />
+        )}
       </div>
     </div>
   );

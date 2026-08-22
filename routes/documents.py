@@ -1,10 +1,12 @@
 import os
 import boto3
+import uuid
+import PyPDF2
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from werkzeug.utils import secure_filename
-import uuid
 from models import db, Document, DocumentVersion, User
+from ai_engine import ask_sop_bot # Make sure this is imported!
 
 documents_bp = Blueprint('documents', __name__)
 
@@ -36,14 +38,25 @@ def upload_sop():
         return jsonify({"error": "Document number and version are required"}), 400
 
     try:
-        # Create a unique file name for S3
+        # --- 1. EXTRACT TEXT FOR AI PARSING ---
+        file.seek(0)
+        pdf_reader = PyPDF2.PdfReader(file)
+        parsed_content = {}
+        for page_num in range(len(pdf_reader.pages)):
+            page_text = pdf_reader.pages[page_num].extract_text()
+            if page_text:
+                parsed_content[str(page_num + 1)] = page_text
+        
+        # Reset the file pointer so it can be uploaded to S3!
+        file.seek(0)
+
+        # --- 2. UPLOAD TO AWS S3 ---
         unique_id = str(uuid.uuid4())[:8]
         safe_filename = secure_filename(file.filename)
         s3_key = f"sops/{unique_id}_{safe_filename}"
         
         bucket_name = os.getenv('AWS_S3_BUCKET_NAME')
 
-        # Upload the physical file to AWS S3
         s3_client.upload_fileobj(
             file,
             bucket_name,
@@ -53,39 +66,40 @@ def upload_sop():
 
         current_user_id = get_jwt_identity()
 
-        # 1. Check if the Parent Document already exists
+        # --- 3. DATABASE SAVING ---
         doc = Document.query.filter_by(document_number=document_number).first()
         
-        # 2. If it is a brand new SOP, create the Parent record first
         if not doc:
             if not title:
                 return jsonify({"error": "Title is required for a completely new document"}), 400
             doc = Document(document_number=document_number, title=title)
             db.session.add(doc)
-            db.session.flush() # Flushes to DB to generate the doc.id without fully committing yet
+            db.session.flush() 
 
-        # 3. Create the Child DocumentVersion record
         new_version = DocumentVersion(
             version_number=version,
             file_key=s3_key,
-            status='Draft', # All new uploads start in Draft status for review
+            status='Draft', 
             document_id=doc.id,
             uploader_id=current_user_id,
-            reviewer_id=reviewer_id
+            reviewer_id=reviewer_id,
+            parsed_content=parsed_content # <-- SAVING THE EXTRACTED TEXT HERE!
         )
         
         db.session.add(new_version)
         db.session.commit()
 
         return jsonify({
-            "message": "Document uploaded successfully and set to Draft", 
+            "message": "Document uploaded and parsed successfully.", 
             "document_number": doc.document_number,
             "version": new_version.version_number
         }), 201
 
     except Exception as e:
         db.session.rollback()
-        return jsonify({"error": str(e)}), 500
+        print(f"Upload Error: {e}")
+        return jsonify({"error": "An error occurred during upload."}), 500
+
 
 @documents_bp.route('/view_document/<int:version_id>', methods=['GET'])
 @jwt_required()
@@ -94,7 +108,6 @@ def view_document(version_id):
     version = db.get_or_404(DocumentVersion, version_id)
     
     try:
-        # Generate a secure link that expires in 1 hour (3600 seconds)
         presigned_url = s3_client.generate_presigned_url(
             'get_object',
             Params={
@@ -119,10 +132,8 @@ def approve_document(version_id):
         return jsonify({"message": "Document is already authorized"}), 400
 
     try:
-        # 1. Find the parent document ID
         doc_id = version_to_approve.document_id
         
-        # 2. Find any currently Authorized versions of this document and make them Obsolete
         old_authorized_versions = DocumentVersion.query.filter_by(
             document_id=doc_id, 
             status='Authorized'
@@ -131,7 +142,6 @@ def approve_document(version_id):
         for old_ver in old_authorized_versions:
             old_ver.status = 'Obsolete'
         
-        # 3. Authorize the new version
         version_to_approve.status = 'Authorized'
         
         db.session.commit()
@@ -149,25 +159,16 @@ def approve_document(version_id):
 @documents_bp.route('/documents', methods=['GET'])
 @jwt_required()
 def get_documents():
-    # 1. Identify the current logged-in user securely from their token
     current_user_id = get_jwt_identity() 
-    
-    # 2. Get the requested view from the frontend
     view_filter = request.args.get('view') 
     
     query = DocumentVersion.query
     
-    # 3. Apply the specific filters based on the view requested
     if view_filter == 'my_reviews':
-        # Show ONLY drafts specifically assigned to ME
         query = query.filter_by(reviewer_id=current_user_id, status='Draft')
-        
     elif view_filter == 'my_uploads':
-        # Show documents I uploaded (so I can track their status)
         query = query.filter_by(uploader_id=current_user_id)
-        
     else:
-        # Default view: Just show all Authorized documents
         query = query.filter_by(status='Authorized')
         
     versions = query.all()
@@ -186,15 +187,39 @@ def get_documents():
         
     return jsonify(results), 200
 
+
 @documents_bp.route('/reviewers', methods=['GET'])
 @jwt_required()
 def get_reviewers():
     """Fetches a list of users who can be assigned as reviewers."""
-    # Assuming you want anyone with a 'qa_manager' role, or just fetch all users if you don't have roles yet.
-    # For now, let's fetch all users to keep it simple, or filter by role if you have that set up:
     reviewers = User.query.all() 
-    
-    # If you haven't assigned roles in your DB yet, just use: reviewers = User.query.all()
-
     results = [{"id": r.id, "username": r.username} for r in reviewers]
     return jsonify(results), 200
+
+
+# ==========================================
+# NEW: AI CHAT ENDPOINT
+# ==========================================
+@documents_bp.route('/sops/<int:version_id>/chat', methods=['POST'])
+@jwt_required()
+def chat_with_sop(version_id):
+    # Retrieve the specific document version
+    doc_version = db.get_or_404(DocumentVersion, version_id)
+    
+    data = request.get_json()
+    question = data.get('question')
+
+    if not question:
+        return jsonify({"error": "Question is required."}), 400
+        
+    # Safety check in case they click "Ask AI" on an old document uploaded before we added this feature
+    if not doc_version.parsed_content:
+        return jsonify({"error": "This document was uploaded before AI parsing was enabled. Please re-upload it."}), 400
+
+    # Pass the stored JSON text directly to Gemini
+    ai_response = ask_sop_bot(doc_version.parsed_content, question)
+
+    if not ai_response:
+        return jsonify({"error": "AI failed to respond."}), 500
+
+    return jsonify({"answer": ai_response}), 200

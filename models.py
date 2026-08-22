@@ -87,6 +87,7 @@ class Document(db.Model):
     document_number = db.Column(db.String(50), unique=True, nullable=False) # e.g., "SOP-001"
     title = db.Column(db.String(200), nullable=False)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    parsed_content = db.Column(db.JSON, nullable=True)
 
     # Establish relationship to all versions of this document
     versions = db.relationship('DocumentVersion', backref='document', lazy=True, cascade="all, delete-orphan")
@@ -106,6 +107,7 @@ class DocumentVersion(db.Model):
     document_id = db.Column(db.Integer, db.ForeignKey('documents.id'), nullable=False)
     uploader_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     reviewer_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    parsed_content = db.Column(db.JSON, nullable=True)
     
     uploaded_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
@@ -166,3 +168,47 @@ class InventoryItem(db.Model):
         foreign_keys='InventoryItem.added_by_id', 
         backref='added_inventory'
     )
+
+# Add this to your models.py file
+
+class TrainingRecord(db.Model):
+    __tablename__ = 'training_records'
+
+    id = db.Column(db.Integer, primary_key=True)
+    
+    # Relational Link to Users Table
+    # Note: Ensure 'users.id' matches your actual User table name
+    employee_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    employee = db.relationship('User', backref='training_records') 
+    
+    training_type = db.Column(db.String(50), nullable=False) # 'Self-Reading', 'Classroom', 'On-Job Training'
+    title = db.Column(db.String(200), nullable=False) 
+    status = db.Column(db.String(50), default='Pending') # 'Pending', 'Completed'
+    
+    # --- Self-Reading Specific ---
+    document_id = db.Column(db.String(100), nullable=True) # e.g., SOP-001
+    
+    # --- Classroom Specific ---
+    classroom_date = db.Column(db.String(50), nullable=True)
+    classroom_time = db.Column(db.String(50), nullable=True)
+    trainer_name = db.Column(db.String(100), nullable=True)
+    
+    # --- On-Job Training (OJT) Specific ---
+    ojt_effectiveness = db.Column(db.Text, nullable=True)
+    
+    created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
+    completed_at = db.Column(db.DateTime, nullable=True)
+
+# Add to models.py
+class SOPDocument(db.Model):
+    __tablename__ = 'sop_documents'
+
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(255), nullable=False)
+    version = db.Column(db.String(50), nullable=False)
+    s3_url = db.Column(db.String(500), nullable=True)
+    
+    # Store the extracted text as a JSON dictionary: {"1": "Text on page 1...", "2": "Text on page 2..."}
+    parsed_content = db.Column(db.JSON, nullable=False) 
+    
+    uploaded_at = db.Column(db.DateTime, default=db.func.current_timestamp())

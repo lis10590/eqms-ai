@@ -196,3 +196,37 @@ def generate_ai_investigation(deviation_text: str, category: str = "", qa_narrat
     except Exception as e:
         print(f"Investigation AI Error: {e}")
         return None
+
+# Add to ai_engine.py
+
+def ask_sop_bot(parsed_content: dict, user_question: str):
+    client = genai.Client(api_key=GEMINI_API_KEY)
+    
+    system_instruction = """
+    You are an expert Quality Assurance SOP Assistant. 
+    You have been provided with the page-by-page text of an approved Standard Operating Procedure (SOP).
+    
+    Your rules:
+    1. Answer the user's question ONLY using the provided SOP text. 
+    2. If the answer is not in the text, you MUST state: "This information is not explicitly detailed in the current SOP." Do not guess.
+    3. You MUST provide citations for your answer using the exact page numbers provided in the JSON data. (e.g., "According to Page 4, Section 2.1...").
+    """
+
+    # Format the JSON content so Gemini understands the pages
+    document_context = "\n".join([f"--- PAGE {page_num} ---\n{text}" for page_num, text in parsed_content.items()])
+    
+    prompt = f"DOCUMENT CONTENT:\n{document_context}\n\nUSER QUESTION: {user_question}"
+
+    try:
+        response = client.models.generate_content(
+            model='gemini-3.6-flash',
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                system_instruction=system_instruction,
+                temperature=0.1, # Keep it strictly factual
+            ),
+        )
+        return response.text 
+    except Exception as e:
+        print(f"SOP Chat Error: {e}")
+        return None

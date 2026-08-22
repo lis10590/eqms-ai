@@ -16,6 +16,8 @@ from routes.change_controls import cc_bp
 from routes.documents import documents_bp
 from routes.equipment import equipment_bp
 from routes.inventory import inventory_bp
+from routes.trainings import trainings_bp
+from routes.sop_chat import sop_bp
 
 # --- Load Environment Variables ---
 load_dotenv() 
@@ -47,6 +49,8 @@ app.register_blueprint(cc_bp)
 app.register_blueprint(documents_bp)
 app.register_blueprint(equipment_bp)
 app.register_blueprint(inventory_bp)
+app.register_blueprint(trainings_bp)
+app.register_blueprint(sop_bp)
 # --- CLI Command to Create Initial Admin ---
 @app.cli.command("create-admin")
 @click.argument("username")

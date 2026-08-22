@@ -68,6 +68,12 @@ export default function Navbar() {
               >
                 Inventory
               </Link>
+              <Link
+                href="/trainings"
+                className="text-theme-muted hover:text-theme-text hover:bg-theme-body px-4 py-2 rounded-xl text-sm font-semibold transition-all"
+              >
+                Trainings
+              </Link>
 
               {isAdmin && (
                 <Link
