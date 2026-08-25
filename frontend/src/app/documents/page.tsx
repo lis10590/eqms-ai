@@ -1,11 +1,13 @@
 "use client";
 import { useState, useEffect } from "react";
-import UploadSopModal from "../../components/UploadSopModal";
-import SopChatModal from "@/components/SopChatModal"; // NEW: Import the Chat Modal
+import CreateDocumentModal from "@/components/CreateDocumentModal"; // NEW
+import DocumentRevisionModal from "@/components/DocumentRevisionModal"; // NEW
+import SopChatModal from "@/components/SopChatModal";
 import Navbar from "@/components/Navbar";
 
 interface DocumentVersion {
   version_id: number;
+  parent_document_id: number; // NEW: Crucial for editing the correct parent document
   document_number: string;
   title: string;
   version: string;
@@ -20,9 +22,16 @@ export default function DocumentDashboard() {
   const [activeTab, setActiveTab] = useState<TabState>("active");
   const [documents, setDocuments] = useState<DocumentVersion[]>([]);
   const [message, setMessage] = useState<string>("");
-  const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // --- NEW: Chat Modal States ---
+  // --- NEW: Master/Child Modal States ---
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+
+  const [isRevisionModalOpen, setIsRevisionModalOpen] = useState(false);
+  const [activeDocId, setActiveDocId] = useState<number | null>(null);
+  const [activeDocNumber, setActiveDocNumber] = useState("");
+  const [activeDocTitle, setActiveDocTitle] = useState("");
+
+  // --- Chat Modal States ---
   const [isChatModalOpen, setIsChatModalOpen] = useState(false);
   const [selectedSopId, setSelectedSopId] = useState<number | null>(null);
   const [selectedSopTitle, setSelectedSopTitle] = useState("");
@@ -121,7 +130,6 @@ export default function DocumentDashboard() {
     }
   };
 
-  // --- NEW: Function to open the chat ---
   const handleOpenChat = (id: number, title: string) => {
     setSelectedSopId(id);
     setSelectedSopTitle(title);
@@ -144,8 +152,9 @@ export default function DocumentDashboard() {
                 Manage and review Standard Operating Procedures.
               </p>
             </div>
+            {/* UPDATED UPLOAD BUTTON */}
             <button
-              onClick={() => setIsModalOpen(true)}
+              onClick={() => setIsCreateModalOpen(true)}
               className="bg-theme-primary text-white px-6 py-3 rounded-2xl hover:bg-theme-primaryHover font-bold shadow-md hover:shadow-lg transition-all transform hover:-translate-y-1 flex items-center gap-2"
             >
               + Upload New SOP
@@ -160,7 +169,6 @@ export default function DocumentDashboard() {
           )}
 
           <div className="px-8 pt-6">
-            {/* Premium Pill Tabs */}
             <div className="flex space-x-2 bg-theme-body/50 p-1.5 rounded-2xl w-max border border-theme-border/50 shadow-inner">
               <button
                 onClick={() => setActiveTab("active")}
@@ -195,7 +203,6 @@ export default function DocumentDashboard() {
             </div>
           </div>
 
-          {/* Redesigned Minimalist Table */}
           <div className="overflow-x-auto p-4 sm:p-8">
             <table className="min-w-full text-sm text-left border-collapse">
               <thead>
@@ -280,12 +287,37 @@ export default function DocumentDashboard() {
                       <td className="py-5 text-right space-x-4 pr-4 whitespace-nowrap">
                         <button
                           onClick={() => handleViewPdf(doc.version_id)}
-                          className="text-theme-accent hover:text-theme-primary font-bold transition-colors"
+                          className="text-theme-muted hover:text-theme-primary font-bold transition-colors"
                         >
                           View PDF
                         </button>
 
-                        {/* NEW: ASK AI BUTTON IS INJECTED HERE */}
+                        {/* NEW: EDIT / REVISE BUTTON */}
+                        <button
+                          onClick={() => {
+                            setActiveDocId(doc.parent_document_id); // Links directly to the master document
+                            setActiveDocNumber(doc.document_number);
+                            setActiveDocTitle(doc.title);
+                            setIsRevisionModalOpen(true);
+                          }}
+                          className="text-blue-500 hover:text-blue-400 font-bold transition-colors inline-flex items-center gap-1"
+                        >
+                          <svg
+                            className="w-4 h-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+                            />
+                          </svg>
+                          Edit
+                        </button>
+
                         <button
                           onClick={() =>
                             handleOpenChat(doc.version_id, doc.title)
@@ -325,18 +357,37 @@ export default function DocumentDashboard() {
           </div>
         </div>
 
-        <UploadSopModal
-          isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
+        {/* --- MODAL RENDERING ZONE --- */}
+
+        <CreateDocumentModal
+          isOpen={isCreateModalOpen}
+          onClose={() => setIsCreateModalOpen(false)}
+          onSuccess={(id, number, title) => {
+            // Immediately open the revision modal after shell is created
+            setIsCreateModalOpen(false);
+            setActiveDocId(id);
+            setActiveDocNumber(number);
+            setActiveDocTitle(title);
+            setIsRevisionModalOpen(true);
+          }}
+        />
+
+        <DocumentRevisionModal
+          isOpen={isRevisionModalOpen}
+          onClose={() => {
+            setIsRevisionModalOpen(false);
+            setActiveDocId(null);
+          }}
+          documentId={activeDocId}
+          documentNumber={activeDocNumber}
+          documentTitle={activeDocTitle}
           onSuccess={() => {
-            setIsModalOpen(false);
-            setMessage("New SOP uploaded successfully!");
             fetchDocuments(activeTab);
+            setMessage("Revision uploaded successfully!");
             setTimeout(() => setMessage(""), 4000);
           }}
         />
 
-        {/* NEW: THE CHAT MODAL RENDERER */}
         {selectedSopId && (
           <SopChatModal
             isOpen={isChatModalOpen}

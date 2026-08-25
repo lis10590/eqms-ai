@@ -108,6 +108,7 @@ class DocumentVersion(db.Model):
     uploader_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     reviewer_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
     parsed_content = db.Column(db.JSON, nullable=True)
+    change_reason = db.Column(db.Text, nullable=True)
     
     uploaded_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
@@ -198,6 +199,7 @@ class TrainingRecord(db.Model):
     
     created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
     completed_at = db.Column(db.DateTime, nullable=True)
+    manual_approval_justification = db.Column(db.Text, nullable=True)
 
 # Add to models.py
 class SOPDocument(db.Model):

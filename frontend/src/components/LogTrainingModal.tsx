@@ -14,10 +14,11 @@ export default function LogTrainingModal({
   onSuccess,
 }: LogTrainingModalProps) {
   const [availableUsers, setAvailableUsers] = useState<any[]>([]);
+  const [availableSops, setAvailableSops] = useState<any[]>([]); // NEW: State for SOPs
+
   const [employeeId, setEmployeeId] = useState("");
   const [title, setTitle] = useState("");
   const [trainingType, setTrainingType] = useState("Self-Reading");
-  const [status, setStatus] = useState("Completed");
 
   // Conditional Fields
   const [documentId, setDocumentId] = useState("");
@@ -30,24 +31,37 @@ export default function LogTrainingModal({
 
   useEffect(() => {
     if (isOpen) {
-      const fetchUsers = async () => {
+      const fetchSetupData = async () => {
         try {
           const token = localStorage.getItem("token");
-          const res = await fetch(
+
+          // 1. Fetch Users
+          const userRes = await fetch(
             `${process.env.NEXT_PUBLIC_API_URL}/trainings/users`,
             {
               headers: { Authorization: `Bearer ${token}` },
             },
           );
-          if (res.ok) {
-            const data = await res.json();
-            setAvailableUsers(data);
+          if (userRes.ok) {
+            setAvailableUsers(await userRes.json());
+          }
+
+          // 2. Fetch Active SOPs for the dropdown
+          const sopRes = await fetch(
+            `${process.env.NEXT_PUBLIC_API_URL}/documents?view=active`,
+            {
+              headers: { Authorization: `Bearer ${token}` },
+            },
+          );
+          if (sopRes.ok) {
+            setAvailableSops(await sopRes.json());
           }
         } catch (error) {
-          console.error("Failed to fetch users");
+          console.error("Failed to fetch setup data");
         }
       };
-      fetchUsers();
+
+      fetchSetupData();
     }
   }, [isOpen]);
 
@@ -61,7 +75,7 @@ export default function LogTrainingModal({
       employee_id: employeeId,
       title,
       training_type: trainingType,
-      status,
+      status: "Open",
       document_id: trainingType === "Self-Reading" ? documentId : null,
       classroom_date: trainingType === "Classroom" ? classroomDate : null,
       classroom_time: trainingType === "Classroom" ? classroomTime : null,
@@ -85,6 +99,7 @@ export default function LogTrainingModal({
       );
 
       if (response.ok) {
+        // Reset form
         setEmployeeId("");
         setTitle("");
         setDocumentId("");
@@ -104,10 +119,21 @@ export default function LogTrainingModal({
     }
   };
 
+  // Helper to auto-fill the title when an SOP is selected
+  const handleSopSelection = (selectedDocumentNumber: string) => {
+    setDocumentId(selectedDocumentNumber);
+    const selectedSop = availableSops.find(
+      (sop) => sop.document_number === selectedDocumentNumber,
+    );
+    if (selectedSop) {
+      setTitle(selectedSop.title);
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 transition-opacity">
       <div className="bg-theme-card/95 backdrop-blur-2xl rounded-3xl shadow-2xl border border-theme-border/50 w-full max-w-2xl overflow-hidden max-h-[90vh] flex flex-col">
-        <div className="p-8 border-b border-theme-border/50 flex justify-between items-center bg-theme-body/30">
+        <div className="p-8 border-b border-theme-border/50 flex justify-between items-center bg-theme-body/30 shrink-0">
           <div>
             <h2 className="text-2xl font-extrabold text-theme-text tracking-tight">
               Log Training Record
@@ -180,6 +206,35 @@ export default function LogTrainingModal({
               </div>
             </div>
 
+            {/* --- NEW: SOP DROPDOWN --- */}
+            {trainingType === "Self-Reading" && (
+              <div className="p-5 bg-theme-body/30 border border-theme-border/50 rounded-2xl space-y-4 animate-fadeIn">
+                <p className="text-xs font-bold text-theme-accent uppercase tracking-wide">
+                  Document Selection
+                </p>
+                <div className="space-y-1">
+                  <label className="block text-sm font-bold text-theme-muted ml-1">
+                    Select Active SOP
+                  </label>
+                  <select
+                    required
+                    value={documentId}
+                    onChange={(e) => handleSopSelection(e.target.value)}
+                    className="w-full px-4 py-3 bg-theme-card border border-theme-border rounded-2xl focus:ring-2 focus:ring-theme-accent outline-none text-theme-text transition-all"
+                  >
+                    <option value="" disabled>
+                      Search or select an SOP...
+                    </option>
+                    {availableSops.map((sop) => (
+                      <option key={sop.version_id} value={sop.document_number}>
+                        {sop.document_number} - {sop.title} (v{sop.version})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            )}
+
             <div className="space-y-1">
               <label className="block text-sm font-bold text-theme-muted ml-1">
                 Training Title / Subject
@@ -193,27 +248,6 @@ export default function LogTrainingModal({
                 className="w-full px-4 py-3 bg-theme-body/50 border border-theme-border rounded-2xl focus:ring-2 focus:ring-theme-accent outline-none text-theme-text transition-all"
               />
             </div>
-
-            {trainingType === "Self-Reading" && (
-              <div className="p-5 bg-theme-body/30 border border-theme-border/50 rounded-2xl space-y-4 animate-fadeIn">
-                <p className="text-xs font-bold text-theme-accent uppercase tracking-wide">
-                  Document Link
-                </p>
-                <div className="space-y-1">
-                  <label className="block text-sm font-bold text-theme-muted ml-1">
-                    SOP / Document ID
-                  </label>
-                  <input
-                    required
-                    type="text"
-                    value={documentId}
-                    onChange={(e) => setDocumentId(e.target.value)}
-                    placeholder="e.g., SOP-001 v2.0"
-                    className="w-full px-4 py-3 bg-theme-card border border-theme-border rounded-2xl focus:ring-2 focus:ring-theme-accent outline-none text-theme-text transition-all"
-                  />
-                </div>
-              </div>
-            )}
 
             {trainingType === "Classroom" && (
               <div className="p-5 bg-theme-body/30 border border-theme-border/50 rounded-2xl space-y-4 animate-fadeIn">
@@ -282,20 +316,6 @@ export default function LogTrainingModal({
                 </div>
               </div>
             )}
-
-            <div className="space-y-1">
-              <label className="block text-sm font-bold text-theme-muted ml-1">
-                Status
-              </label>
-              <select
-                value={status}
-                onChange={(e) => setStatus(e.target.value)}
-                className="w-full px-4 py-3 bg-theme-body/50 border border-theme-border rounded-2xl focus:ring-2 focus:ring-theme-accent outline-none text-theme-text transition-all"
-              >
-                <option value="Completed">Completed & Verified</option>
-                <option value="Pending">Pending Evaluation</option>
-              </select>
-            </div>
           </form>
         </div>
 

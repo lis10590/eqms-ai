@@ -1,8 +1,25 @@
+import os
+import boto3
 from flask import Blueprint, request, jsonify
-from flask_jwt_extended import jwt_required
-from models import db, TrainingRecord, User 
+from flask_jwt_extended import jwt_required, get_jwt_identity
+from models import db, TrainingRecord, User, Document, DocumentVersion
 
 trainings_bp = Blueprint('trainings', __name__)
+
+s3_client = boto3.client(
+    's3',
+    aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'),
+    aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY'),
+    region_name=os.getenv('AWS_REGION')
+)
+
+# --- NEW: Get Current User Info for the Frontend ---
+@trainings_bp.route('/trainings/me', methods=['GET'])
+@jwt_required()
+def get_current_user():
+    user_id = get_jwt_identity()
+    user = db.get_or_404(User, user_id)
+    return jsonify({"id": user.id, "role": user.role, "name": user.username}), 200
 
 @trainings_bp.route('/trainings/users', methods=['GET'])
 @jwt_required()
@@ -14,14 +31,20 @@ def get_users_for_training():
 @trainings_bp.route('/trainings', methods=['POST'])
 @jwt_required()
 def log_training():
+    current_user_id = get_jwt_identity()
+    user = db.get_or_404(User, current_user_id)
+    
+    # ENFORCE ROLE RESTRICTION
+    if user.role not in ['admin', 'qa_user']:
+        return jsonify({"error": "Only Admins and QA can assign training."}), 403
+
     data = request.get_json()
     try:
         new_training = TrainingRecord(
             employee_id=data.get('employee_id'),
             training_type=data.get('training_type'),
             title=data.get('title'),
-            status='Open', # ALWAYS starts as Open now
-            
+            status='Open', # Default is ALWAYS Open
             document_id=data.get('document_id'),
             classroom_date=data.get('classroom_date'),
             classroom_time=data.get('classroom_time'),
@@ -30,15 +53,22 @@ def log_training():
         )
         db.session.add(new_training)
         db.session.commit()
-        return jsonify({"message": "Training logged successfully", "id": new_training.id}), 201
+        return jsonify({"message": "Training assigned successfully", "id": new_training.id}), 201
     except Exception as e:
         db.session.rollback()
-        return jsonify({"error": "Failed to log training"}), 500
+        return jsonify({"error": "Failed to assign training"}), 500
 
 @trainings_bp.route('/trainings', methods=['GET'])
 @jwt_required()
 def get_trainings():
-    trainings = TrainingRecord.query.order_by(TrainingRecord.id.desc()).all()
+    current_user_id = get_jwt_identity()
+    user = db.get_or_404(User, current_user_id)
+    
+    if user.role in ['qa_user', 'admin']: 
+        trainings = TrainingRecord.query.order_by(TrainingRecord.id.desc()).all()
+    else:
+        trainings = TrainingRecord.query.filter_by(employee_id=current_user_id).order_by(TrainingRecord.id.desc()).all()
+        
     result = []
     for t in trainings:
         result.append({
@@ -48,19 +78,16 @@ def get_trainings():
             "training_type": t.training_type,
             "title": t.title,
             "status": t.status,
-            
-            # Additional details needed for the modal
             "document_id": getattr(t, 'document_id', ''),
             "classroom_date": getattr(t, 'classroom_date', ''),
             "classroom_time": getattr(t, 'classroom_time', ''),
             "trainer_name": getattr(t, 'trainer_name', ''),
             "ojt_effectiveness": getattr(t, 'ojt_effectiveness', ''),
-            
+            "manual_approval_justification": getattr(t, 'manual_approval_justification', ''),
             "created_at": t.created_at.strftime('%Y-%m-%d') if t.created_at else "N/A"
         })
     return jsonify(result), 200
 
-# --- NEW: UPDATE ROUTE FOR THE MODAL ---
 @trainings_bp.route('/trainings/<int:id>', methods=['PUT'])
 @jwt_required()
 def update_training(id):
@@ -79,6 +106,29 @@ def update_training(id):
         training.trainer_name = data['trainer_name']
     if 'ojt_effectiveness' in data:
         training.ojt_effectiveness = data['ojt_effectiveness']
+    if 'manual_approval_justification' in data:
+        training.manual_approval_justification = data['manual_approval_justification']
 
     db.session.commit()
     return jsonify({"message": "Training updated successfully"}), 200
+
+@trainings_bp.route('/trainings/view_sop/<string:document_number>', methods=['GET'])
+@jwt_required()
+def view_sop_by_number(document_number):
+    doc = Document.query.filter_by(document_number=document_number).first()
+    if not doc:
+        return jsonify({"error": f"Document {document_number} not found in the system."}), 404
+        
+    authorized_version = DocumentVersion.query.filter_by(document_id=doc.id, status='Authorized').first()
+    if not authorized_version:
+        return jsonify({"error": "No authorized version available for this SOP."}), 404
+
+    try:
+        presigned_url = s3_client.generate_presigned_url(
+            'get_object',
+            Params={'Bucket': os.getenv('AWS_S3_BUCKET_NAME'), 'Key': authorized_version.file_key},
+            ExpiresIn=3600
+        )
+        return jsonify({"url": presigned_url}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
