@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Navbar from "@/components/Navbar";
 import LogTrainingModal from "@/components/LogTrainingModal";
 import TrainingDetailsModal from "@/components/TrainingDetailsModal";
+import QuizModal from "@/components/QuizModal";
 
 export default function TrainingsDashboard() {
   const [trainings, setTrainings] = useState<any[]>([]);
@@ -15,6 +16,7 @@ export default function TrainingsDashboard() {
   const [isLogModalOpen, setIsLogModalOpen] = useState(false);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [selectedTraining, setSelectedTraining] = useState<any | null>(null);
+  const [isQuizModalOpen, setIsQuizModalOpen] = useState(false);
 
   const fetchData = async () => {
     const token = localStorage.getItem("token");
@@ -208,6 +210,17 @@ export default function TrainingsDashboard() {
         training={selectedTraining}
         onSuccess={fetchData}
         currentUser={currentUser}
+        onOpenQuiz={() => {
+          setIsDetailsModalOpen(false);
+          setIsQuizModalOpen(true);
+        }}
+      />
+
+      <QuizModal
+        isOpen={isQuizModalOpen}
+        onClose={() => setIsQuizModalOpen(false)}
+        training={selectedTraining}
+        onSuccess={fetchData}
       />
     </div>
   );

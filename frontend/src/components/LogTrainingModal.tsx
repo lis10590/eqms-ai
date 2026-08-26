@@ -14,7 +14,7 @@ export default function LogTrainingModal({
   onSuccess,
 }: LogTrainingModalProps) {
   const [availableUsers, setAvailableUsers] = useState<any[]>([]);
-  const [availableSops, setAvailableSops] = useState<any[]>([]); // NEW: State for SOPs
+  const [availableSops, setAvailableSops] = useState<any[]>([]);
 
   const [employeeId, setEmployeeId] = useState("");
   const [title, setTitle] = useState("");
@@ -25,7 +25,9 @@ export default function LogTrainingModal({
   const [classroomDate, setClassroomDate] = useState("");
   const [classroomTime, setClassroomTime] = useState("");
   const [trainerName, setTrainerName] = useState("");
-  const [ojtEffectiveness, setOjtEffectiveness] = useState("");
+
+  // NEW: Array state to hold dynamic OJT tasks
+  const [ojtTasks, setOjtTasks] = useState<string[]>([""]);
 
   const [isLoading, setIsLoading] = useState(false);
 
@@ -34,54 +36,77 @@ export default function LogTrainingModal({
       const fetchSetupData = async () => {
         try {
           const token = localStorage.getItem("token");
-
-          // 1. Fetch Users
           const userRes = await fetch(
             `${process.env.NEXT_PUBLIC_API_URL}/trainings/users`,
             {
               headers: { Authorization: `Bearer ${token}` },
             },
           );
-          if (userRes.ok) {
-            setAvailableUsers(await userRes.json());
-          }
+          if (userRes.ok) setAvailableUsers(await userRes.json());
 
-          // 2. Fetch Active SOPs for the dropdown
           const sopRes = await fetch(
             `${process.env.NEXT_PUBLIC_API_URL}/documents?view=active`,
             {
               headers: { Authorization: `Bearer ${token}` },
             },
           );
-          if (sopRes.ok) {
-            setAvailableSops(await sopRes.json());
-          }
+          if (sopRes.ok) setAvailableSops(await sopRes.json());
         } catch (error) {
           console.error("Failed to fetch setup data");
         }
       };
-
       fetchSetupData();
+
+      // Reset form states on open
+      setEmployeeId("");
+      setTitle("");
+      setTrainingType("Self-Reading");
+      setDocumentId("");
+      setClassroomDate("");
+      setClassroomTime("");
+      setTrainerName("");
+      setOjtTasks([""]); // Start with one empty task
     }
   }, [isOpen]);
 
   if (!isOpen) return null;
 
+  const handleTaskChange = (idx: number, val: string) => {
+    const newTasks = [...ojtTasks];
+    newTasks[idx] = val;
+    setOjtTasks(newTasks);
+  };
+
+  const handleAddTask = () => setOjtTasks([...ojtTasks, ""]);
+  const handleRemoveTask = (idx: number) => {
+    const newTasks = [...ojtTasks];
+    newTasks.splice(idx, 1);
+    setOjtTasks(newTasks);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+
+    // Format the tasks into an array of objects and convert to string
+    const formattedTasks = ojtTasks
+      .filter((t) => t.trim() !== "")
+      .map((t) => ({ task: t.trim(), response: "" }));
 
     const payload = {
       employee_id: employeeId,
       title,
       training_type: trainingType,
-      status: "Open",
+      status: "Open", // Always Open
       document_id: trainingType === "Self-Reading" ? documentId : null,
       classroom_date: trainingType === "Classroom" ? classroomDate : null,
       classroom_time: trainingType === "Classroom" ? classroomTime : null,
       trainer_name: trainingType === "Classroom" ? trainerName : null,
+      // Save the tasks array as a JSON string to fit in the text column
       ojt_effectiveness:
-        trainingType === "On-Job Training" ? ojtEffectiveness : null,
+        trainingType === "On-Job Training"
+          ? JSON.stringify(formattedTasks)
+          : null,
     };
 
     try {
@@ -99,14 +124,6 @@ export default function LogTrainingModal({
       );
 
       if (response.ok) {
-        // Reset form
-        setEmployeeId("");
-        setTitle("");
-        setDocumentId("");
-        setClassroomDate("");
-        setClassroomTime("");
-        setTrainerName("");
-        setOjtEffectiveness("");
         onSuccess();
         onClose();
       } else {
@@ -119,15 +136,12 @@ export default function LogTrainingModal({
     }
   };
 
-  // Helper to auto-fill the title when an SOP is selected
   const handleSopSelection = (selectedDocumentNumber: string) => {
     setDocumentId(selectedDocumentNumber);
     const selectedSop = availableSops.find(
       (sop) => sop.document_number === selectedDocumentNumber,
     );
-    if (selectedSop) {
-      setTitle(selectedSop.title);
-    }
+    if (selectedSop) setTitle(selectedSop.title);
   };
 
   return (
@@ -136,10 +150,10 @@ export default function LogTrainingModal({
         <div className="p-8 border-b border-theme-border/50 flex justify-between items-center bg-theme-body/30 shrink-0">
           <div>
             <h2 className="text-2xl font-extrabold text-theme-text tracking-tight">
-              Log Training Record
+              Assign Training
             </h2>
             <p className="text-sm text-theme-muted mt-1">
-              Record employee qualifications and SOP reading.
+              Record employee qualifications and OJT tasks.
             </p>
           </div>
           <button
@@ -206,7 +220,6 @@ export default function LogTrainingModal({
               </div>
             </div>
 
-            {/* --- NEW: SOP DROPDOWN --- */}
             {trainingType === "Self-Reading" && (
               <div className="p-5 bg-theme-body/30 border border-theme-border/50 rounded-2xl space-y-4 animate-fadeIn">
                 <p className="text-xs font-bold text-theme-accent uppercase tracking-wide">
@@ -251,10 +264,7 @@ export default function LogTrainingModal({
 
             {trainingType === "Classroom" && (
               <div className="p-5 bg-theme-body/30 border border-theme-border/50 rounded-2xl space-y-4 animate-fadeIn">
-                <p className="text-xs font-bold text-theme-accent uppercase tracking-wide">
-                  Session Details
-                </p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1">
                     <label className="block text-sm font-bold text-theme-muted ml-1">
                       Date
@@ -289,31 +299,61 @@ export default function LogTrainingModal({
                     type="text"
                     value={trainerName}
                     onChange={(e) => setTrainerName(e.target.value)}
-                    placeholder="e.g., Dr. Smith"
                     className="w-full px-4 py-3 bg-theme-card border border-theme-border rounded-2xl focus:ring-2 focus:ring-theme-accent outline-none text-theme-text transition-all"
                   />
                 </div>
               </div>
             )}
 
+            {/* --- NEW: DYNAMIC OJT TASKS --- */}
             {trainingType === "On-Job Training" && (
               <div className="p-5 bg-theme-body/30 border border-theme-border/50 rounded-2xl space-y-4 animate-fadeIn">
-                <p className="text-xs font-bold text-theme-accent uppercase tracking-wide">
-                  Practical Evaluation
-                </p>
-                <div className="space-y-1">
-                  <label className="block text-sm font-bold text-theme-muted ml-1">
-                    Training Effectiveness & Context
-                  </label>
-                  <textarea
-                    required
-                    rows={4}
-                    value={ojtEffectiveness}
-                    onChange={(e) => setOjtEffectiveness(e.target.value)}
-                    placeholder="e.g., Supervised operation of Centrifuge #3 during Batch BTN-882..."
-                    className="w-full px-4 py-3 bg-theme-card border border-theme-border rounded-2xl focus:ring-2 focus:ring-theme-accent outline-none text-theme-text resize-none transition-all"
-                  />
+                <div className="flex justify-between items-center mb-2">
+                  <p className="text-xs font-bold text-theme-accent uppercase tracking-wide">
+                    Effectiveness Tasks
+                  </p>
+                  <button
+                    type="button"
+                    onClick={handleAddTask}
+                    className="text-xs font-bold text-theme-primary hover:text-theme-primaryHover bg-theme-primary/10 px-3 py-1 rounded-lg"
+                  >
+                    + Add Task
+                  </button>
                 </div>
+
+                {ojtTasks.map((task, idx) => (
+                  <div key={idx} className="flex gap-2 items-start">
+                    <textarea
+                      required
+                      rows={2}
+                      value={task}
+                      onChange={(e) => handleTaskChange(idx, e.target.value)}
+                      placeholder={`Task ${idx + 1} (e.g., Successfully operate Centrifuge #3)`}
+                      className="w-full px-4 py-3 bg-theme-card border border-theme-border rounded-2xl focus:ring-2 focus:ring-theme-accent outline-none text-theme-text resize-none transition-all"
+                    />
+                    {ojtTasks.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveTask(idx)}
+                        className="mt-2 text-red-500 hover:bg-red-500/10 p-2 rounded-xl transition-colors"
+                      >
+                        <svg
+                          className="w-5 h-5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                          />
+                        </svg>
+                      </button>
+                    )}
+                  </div>
+                ))}
               </div>
             )}
           </form>
@@ -333,7 +373,7 @@ export default function LogTrainingModal({
             disabled={isLoading}
             className="bg-theme-primary text-white px-6 py-3 rounded-2xl hover:bg-theme-primaryHover disabled:opacity-50 font-bold shadow-md transition-all"
           >
-            {isLoading ? "Saving..." : "Log Training"}
+            {isLoading ? "Saving..." : "Assign Training"}
           </button>
         </div>
       </div>

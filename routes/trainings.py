@@ -3,6 +3,7 @@ import boto3
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from models import db, TrainingRecord, User, Document, DocumentVersion
+from ai_engine import generate_sop_quiz
 
 trainings_bp = Blueprint('trainings', __name__)
 
@@ -132,3 +133,25 @@ def view_sop_by_number(document_number):
         return jsonify({"url": presigned_url}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
+@trainings_bp.route('/trainings/<int:id>/quiz', methods=['GET'])
+@jwt_required()
+def get_or_create_quiz(id):
+    training = TrainingRecord.query.get_or_404(id)
+    doc = Document.query.filter_by(document_number=training.document_id).first()
+    if not doc:
+        return jsonify({"error": "SOP not found"}), 404
+        
+    authorized_version = DocumentVersion.query.filter_by(document_id=doc.id, status='Authorized').first()
+    if not authorized_version or not authorized_version.parsed_content:
+        return jsonify({"error": "No parsed content available for quiz generation."}), 400
+
+    try:
+        # Generate the full quiz with answers and explanations
+        questions = generate_sop_quiz(authorized_version.parsed_content)
+        
+        # CRITICAL: Send the FULL questions array so the frontend can grade it!
+        return jsonify({"questions": questions}), 200
+    except Exception as e:
+        return jsonify({"error": f"AI Generation Failed: {str(e)}"}), 500

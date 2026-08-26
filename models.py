@@ -200,6 +200,8 @@ class TrainingRecord(db.Model):
     created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
     completed_at = db.Column(db.DateTime, nullable=True)
     manual_approval_justification = db.Column(db.Text, nullable=True)
+    quiz_score = db.Column(db.Integer, nullable=True) # e.g., 80, 100
+    quiz_attempts = db.Column(db.Integer, default=0)
 
 # Add to models.py
 class SOPDocument(db.Model):

@@ -4,6 +4,7 @@ from google.genai import types
 from pydantic import BaseModel, Field
 from typing import Literal
 from dotenv import load_dotenv
+import json
 
 # --- Load Environment Variables ---
 load_dotenv()
@@ -230,3 +231,44 @@ def ask_sop_bot(parsed_content: dict, user_question: str):
     except Exception as e:
         print(f"SOP Chat Error: {e}")
         return None
+
+
+def generate_sop_quiz(parsed_content):
+    """Generates 5 multiple-choice questions from the SOP text."""
+    # Flatten parsed document pages into one context string
+    full_text = "\n\n".join([f"Page {p}: {txt}" for p, txt in parsed_content.items()])
+
+    prompt = f"""
+You are a GMP Training & Quality Assurance Specialist.
+Based on the following Standard Operating Procedure (SOP), generate exactly 5 multiple-choice questions to verify that the employee read and understood the critical compliance, safety, and operational steps.
+
+Rules:
+1. Provide exactly 4 options per question.
+2. Mark the zero-based index of the correct answer (0, 1, 2, or 3).
+3. Return ONLY a valid JSON array matching the structure below. Do not include markdown formatting or backticks.
+
+Expected JSON Structure:
+[
+  {{
+    "question": "What is the minimum hand-washing duration required?",
+    "options": ["15 seconds", "30 seconds", "60 seconds", "2 minutes"],
+    "correct_index": 1,
+    "explanation": "Section 5.0 states hand hygiene must be performed for at least 30 seconds."
+  }}
+]
+
+SOP TEXT:
+{full_text}
+"""
+    
+    # --- UPDATED SYNTAX FOR THE NEW SDK ---
+    client = genai.Client() 
+    response = client.models.generate_content(
+        model='gemini-3.6-flash',
+        contents=prompt
+    )
+    # --------------------------------------
+    
+    # Clean the response in case Gemini includes markdown code blocks
+    clean_text = response.text.strip().removeprefix("```json").removeprefix("```").removesuffix("```").strip()
+    return json.loads(clean_text)
