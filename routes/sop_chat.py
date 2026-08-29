@@ -8,7 +8,7 @@ import io
 
 sop_bp = Blueprint('sops', __name__)
 
-@sop_bp.route('/sops/upload', methods=['POST'])
+@sop_bp.route('/direct_sops/upload', methods=['POST'])
 @jwt_required()
 def upload_sop():
     if 'file' not in request.files:
@@ -46,7 +46,7 @@ def upload_sop():
     return jsonify({"message": "SOP Uploaded & Processed", "id": new_sop.id}), 201
 
 
-@sop_bp.route('/sops/<int:sop_id>/chat', methods=['POST'])
+@sop_bp.route('/direct_sops/<int:sop_id>/chat', methods=['POST'])
 @jwt_required()
 def chat_with_sop(sop_id):
     sop = SOPDocument.query.get_or_404(sop_id)

@@ -54,7 +54,7 @@ export default function SopChatModal({
     try {
       const token = localStorage.getItem("token");
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/sops/${sopId}/chat`,
+        `${process.env.NEXT_PUBLIC_API_URL}/direct_sops/${sopId}/chat`,
         {
           method: "POST",
           headers: {

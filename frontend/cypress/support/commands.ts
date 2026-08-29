@@ -1,37 +1,28 @@
 /// <reference types="cypress" />
-// ***********************************************
-// This example commands.ts shows you how to
-// create various custom commands and overwrite
-// existing commands.
-//
-// For more comprehensive examples of custom
-// commands please read more here:
-// https://on.cypress.io/custom-commands
-// ***********************************************
-//
-//
-// -- This is a parent command --
-// Cypress.Commands.add('login', (email, password) => { ... })
-//
-//
-// -- This is a child command --
-// Cypress.Commands.add('drag', { prevSubject: 'element'}, (subject, options) => { ... })
-//
-//
-// -- This is a dual command --
-// Cypress.Commands.add('dismiss', { prevSubject: 'optional'}, (subject, options) => { ... })
-//
-//
-// -- This will overwrite an existing command --
-// Cypress.Commands.overwrite('visit', (originalFn, url, options) => { ... })
-//
-// declare global {
-//   namespace Cypress {
-//     interface Chainable {
-//       login(email: string, password: string): Chainable<void>
-//       drag(subject: string, options?: Partial<TypeOptions>): Chainable<Element>
-//       dismiss(subject: string, options?: Partial<TypeOptions>): Chainable<Element>
-//       visit(originalFn: CommandOriginalFn, url: string, options: Partial<VisitOptions>): Chainable<Element>
-//     }
-//   }
-// }
+
+// This empty export turns the file into a module, fixing the 'declare global' error
+export {};
+
+// 1. Tell TypeScript that our custom cy.login() command exists
+declare global {
+  namespace Cypress {
+    interface Chainable {
+      /**
+       * Custom command to bypass the login screen by injecting a mock JWT.
+       * @example cy.login('qa_user')
+       */
+      login(role?: string): Chainable<void>;
+    }
+  }
+}
+
+// 2. Define exactly what cy.login() actually does
+Cypress.Commands.add("login", (role: string = "admin") => {
+  const fakeToken =
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.fake_payload.fake_signature";
+
+  cy.window().then((win) => {
+    win.localStorage.setItem("token", fakeToken);
+    win.localStorage.setItem("role", role);
+  });
+});

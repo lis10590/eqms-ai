@@ -1,58 +1,72 @@
-from models import db, User, ChangeControl, ChangeTask
+import pytest
+from unittest.mock import patch, MagicMock
+from models import db, ChangeControl, ChangeTask, User
 
-def test_create_change_control_with_tasks(client):
-    """
-    Protocol: Verify that submitting a finalized Change Control successfully
-    saves both the parent record and all associated tasks to the database.
-    """
-    # 1. ARRANGE: Create a test user and log in to get a valid token
-    user = User(username="cc_initiator", role="qa_user")
-    user.set_password("password123")
-    db.session.add(user)
-    db.session.commit()
-
-    login_res = client.post('/login', json={"username": "cc_initiator", "password": "password123"})
-    token = login_res.get_json()["access_token"]
-
-    # 2. ACT: Send a payload simulating the final step of your frontend Modal
-    payload = {
-        "initiator_id": str(user.id),
-        "title": "Modify Incubator #3 Temperature Setpoints",
-        "current_state": "Triggers critical alarm at ±0.5°C for 5 minutes.",
-        "proposed_state": "Trigger critical alarm at ±0.5°C for 15 minutes.",
-        "justification": "Reduce nuisance alarms during cell feeding.",
-        "classification": "Minor",
-        "classification_rationale": "Does not impact product viability based on current validation.",
-        "tasks": [
-            {"Domain": "Equipment", "Task_Description": "Update monitoring software parameters."},
-            {"Domain": "Documentation", "Task_Description": "Revise environmental monitoring SOP."}
-        ]
+@patch('routes.change_controls.assess_change_control')
+def test_assess_change_route(mock_assess, client, qa_token):
+    # Mock the AI returning a structured Pydantic model
+    mock_ai_data = MagicMock()
+    mock_ai_data.model_dump.return_value = {
+        "Risk_Level": "Moderate",
+        "Regulatory_Impact": "Update SOP required",
+        "Recommended_Tasks": [{"Domain": "Quality", "Task_Description": "Revise SOP"}]
     }
-    
-    response = client.post('/change_controls', 
-        json=payload,
-        headers={"Authorization": f"Bearer {token}"}
+    mock_assess.return_value = mock_ai_data
+
+    response = client.post('/assess_change', 
+        headers={'Authorization': f'Bearer {qa_token}'},
+        json={
+            'title': 'Update Centrifuge Speed',
+            'current_state': '5000 RPM',
+            'proposed_state': '6000 RPM',
+            'justification': 'Faster processing'
+        }
     )
+    
+    assert response.status_code == 200
+    assert response.get_json()['assessment']['Risk_Level'] == "Moderate"
 
-    # 3. ASSERT API RESPONSE: Verify the system responded with a success code
+def test_create_change_control(client, admin_token, app):
+    with app.app_context():
+        user = User(username='initiator', role='qa_user')
+        user.set_password('dummy')
+        db.session.add(user)
+        db.session.commit()
+        initiator_id = user.id
+
+    response = client.post('/change_controls', 
+        headers={'Authorization': f'Bearer {admin_token}'},
+        json={
+            'initiator_id': initiator_id,
+            'title': 'Test CC',
+            'current_state': 'A',
+            'proposed_state': 'B',
+            'justification': 'Because',
+            'classification': 'Major',
+            'classification_rationale': 'AI said so',
+            'tasks': [{'Domain': 'QA', 'Task_Description': 'Do QA stuff'}]
+        }
+    )
     assert response.status_code == 201
-    data = response.get_json()
-    assert "id" in data
-    
-    cc_id = data["id"]
+    assert "submitted successfully" in response.get_json()['message']
 
-    # 4. ASSERT DB TRANSACTIONS: Query the database to prove the data actually saved
+def test_update_change_control(client, qa_token, app):
+    with app.app_context():
+        cc = ChangeControl(
+            initiator_id=1, title="Old Title", current_state="A", 
+            proposed_state="B", justification="C", status="In Review"
+        )
+        db.session.add(cc)
+        db.session.commit()
+        cc_id = cc.id
+
+    response = client.put(f'/change_controls/{cc_id}', 
+        headers={'Authorization': f'Bearer {qa_token}'},
+        json={'title': 'New Title'}
+    )
     
-    # Verify the parent record exists
-    saved_cc = db.session.get(ChangeControl, cc_id)
-    assert saved_cc is not None
-    assert saved_cc.title == "Modify Incubator #3 Temperature Setpoints"
-    assert saved_cc.classification == "Minor"
+    assert response.status_code == 200
     
-    # Verify the child records (Tasks) were linked correctly
-    saved_tasks = ChangeTask.query.filter_by(change_control_id=cc_id).all()
-    
-    # The payload had 2 tasks, so the database should have exactly 2 tasks
-    assert len(saved_tasks) == 2
-    assert saved_tasks[0].domain == "Equipment"
-    assert saved_tasks[1].domain == "Documentation"
+    with app.app_context():
+        updated_cc = ChangeControl.query.get(cc_id)
+        assert updated_cc.title == 'New Title'

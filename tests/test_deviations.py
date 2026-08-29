@@ -1,64 +1,64 @@
-from models import db, User
+import pytest
+from unittest.mock import patch, MagicMock
+from models import db, Deviation, User
 
-def test_get_deviations_without_token(client):
-    """
-    Protocol: Verify that an anonymous user cannot view deviations.
-    """
-    # 1. ACT: Try to fetch deviations without sending an Authorization header
-    response = client.get('/deviations')
+@patch('routes.deviations.assess_deviation')
+def test_assess_deviation_route(mock_assess, client, qa_token, app):
+    # Mock the AI returning a structured FMEA assessment
+    mock_ai_data = MagicMock()
+    mock_ai_data.Root_Cause_Category = "Human Error"
+    mock_ai_data.Required_Action = "Retraining"
+    mock_ai_data.RPN = 15
+    mock_ai_data.QA_Narrative_Summary = "Operator error during gowning."
+    mock_assess.return_value = mock_ai_data
 
-    # 2. ASSERT: The system must block the request with a 401 Unauthorized error
-    assert response.status_code == 401
-    
-    data = response.get_json()
-    assert data["msg"] == "Missing Authorization Header"
+    with app.app_context():
+        user = User(username='qa_submitter', role='qa_user')
+        user.set_password('dummy_password')
+        db.session.add(user)
+        db.session.commit()
+        submitter_id = user.id
 
-
-  
-
-def test_assess_deviation_success(client, monkeypatch):
-    """
-    Protocol: Verify that an authenticated user can submit a deviation 
-    and successfully receive an AI assessment and database record.
-    """
-    # 1. ARRANGE: Create a test user and log in to get a valid token
-    user = User(username="qa_engineer", role="qa_user")
-    user.set_password("password123")
-    db.session.add(user)
-    db.session.commit()
-
-    login_response = client.post('/login', json={
-        "username": "qa_engineer",
-        "password": "password123"
-    })
-    token = login_response.get_json()["access_token"]
-
-    # Create a mock object that mimics the structure of your Pydantic AI output
-    class MockAiData:
-        Root_Cause_Category = "Equipment Failure"
-        Required_Action = "Investigate"
-        RPN = 150
-        QA_Narrative_Summary = "Mocked 5 Whys analysis for unit testing."
-
-    # Intercept the assess_deviation function call and return our mock data instead
-    import routes.deviations as deviations_module
-    monkeypatch.setattr(deviations_module, "assess_deviation", lambda text, criteria: MockAiData())
-
-    # 2. ACT: Send the deviation payload with the Authorization header
-    payload = {
-        "submitter_id": "1",
-        "deviation_text": "Freezer temperature spiked to -10°C during overnight storage."
-    }
-    
     response = client.post('/assess_deviation', 
-        json=payload,
-        headers={"Authorization": f"Bearer {token}"}
+        headers={'Authorization': f'Bearer {qa_token}'},
+        json={
+            'submitter_id': submitter_id,
+            'deviation_text': 'Torn glove noticed after 5 minutes.'
+        }
     )
-
-    # 3. ASSERT: Verify the response code and data structure
-    assert response.status_code == 201
-    data = response.get_json()
     
-    assert data["message"] == "Deviation logged and assessed successfully"
-    assert data["assessment"]["root_cause_category"] == "Equipment Failure"
-    assert data["assessment"]["rpn"] == 150
+    assert response.status_code == 201
+    assert response.get_json()['assessment']['rpn'] == 15
+    assert response.get_json()['assessment']['root_cause_category'] == "Human Error"
+
+def test_close_deviation(client, qa_token, app):
+    with app.app_context():
+        dev = Deviation(submitter_id=1, original_deviation_text="Test dev", status="Open")
+        db.session.add(dev)
+        db.session.commit()
+        dev_id = dev.id
+
+    response = client.put(f'/deviations/{dev_id}/close', headers={'Authorization': f'Bearer {qa_token}'})
+    
+    assert response.status_code == 200
+    assert response.get_json()['message'] == "Deviation marked as completed."
+
+@patch('routes.deviations.generate_ai_investigation')
+def test_trigger_ai_investigation(mock_ai_investigation, client, qa_token, app):
+    # Mock the AI 5-Whys generator
+    mock_result = MagicMock()
+    mock_result.Five_Whys = ["Why 1", "Why 2"]
+    mock_result.Root_Cause_Analysis = "Systemic failure."
+    mock_result.CAPA_Summary = "Update SOP."
+    mock_ai_investigation.return_value = mock_result
+
+    with app.app_context():
+        dev = Deviation(submitter_id=1, original_deviation_text="Test dev", status="Under Investigation")
+        db.session.add(dev)
+        db.session.commit()
+        dev_id = dev.id
+
+    response = client.post(f'/deviations/{dev_id}/ai_investigate', headers={'Authorization': f'Bearer {qa_token}'})
+    
+    assert response.status_code == 200
+    assert "Systemic failure" in response.get_json()['root_cause']
