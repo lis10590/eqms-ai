@@ -7,13 +7,20 @@ export default function LoginPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const [isLoading, setIsLoading] = useState(false); // Added loading state
+  const [isLoading, setIsLoading] = useState(false);
+  const [isTakingLong, setIsTakingLong] = useState(false); // Added state for the cold start
   const router = useRouter();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    setIsLoading(true); // Start loading
+    setIsLoading(true);
+    setIsTakingLong(false); // Reset just in case of multiple attempts
+
+    // Start the 3-second countdown
+    const timer = setTimeout(() => {
+      setIsTakingLong(true);
+    }, 3000);
 
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/login`, {
@@ -23,6 +30,9 @@ export default function LoginPage() {
         },
         body: JSON.stringify({ username, password }),
       });
+
+      // The moment the server answers, cancel the timer
+      clearTimeout(timer);
 
       const data = await response.json();
 
@@ -35,8 +45,10 @@ export default function LoginPage() {
 
       router.push("/deviations");
     } catch (err: any) {
+      // Cancel the timer if the request completely fails
+      clearTimeout(timer);
       setError(err.message);
-      setIsLoading(false); // Stop loading only if there's an error (if successful, we redirect)
+      setIsLoading(false);
     }
   };
 
@@ -125,7 +137,7 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full mt-8 py-4 text-white bg-theme-primary rounded-2xl hover:bg-theme-primaryHover transition-all font-bold text-lg shadow-md hover:shadow-lg transform hover:-translate-y-1 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full mt-8 py-4 text-white bg-theme-primary rounded-2xl hover:bg-theme-primaryHover transition-all font-bold text-lg shadow-md hover:shadow-lg transform hover:-translate-y-1 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:-translate-y-0"
           >
             {isLoading ? "Authenticating..." : "Sign In"}
             {!isLoading && (
@@ -144,6 +156,18 @@ export default function LoginPage() {
               </svg>
             )}
           </button>
+
+          {/* New Cold Start Message */}
+          {isTakingLong && (
+            <div className="mt-4 text-center animate-pulse">
+              <p className="text-sm font-semibold text-theme-muted">
+                Waking up the secure cloud server...
+              </p>
+              <p className="text-xs text-theme-muted/70 mt-1">
+                This may take up to 30 seconds on the free tier.
+              </p>
+            </div>
+          )}
         </form>
       </div>
     </div>
