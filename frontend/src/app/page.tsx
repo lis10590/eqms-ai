@@ -137,7 +137,7 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full mt-8 py-4 text-white bg-theme-primary rounded-2xl hover:bg-theme-primaryHover transition-all font-bold text-lg shadow-md hover:shadow-lg transform hover:-translate-y-1 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:-translate-y-0"
+            className="w-full mt-8 py-4 text-white bg-theme-primary rounded-2xl hover:bg-theme-primaryHover transition-all font-bold text-lg shadow-md hover:shadow-lg transform hover:-translate-y-1 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
           >
             {isLoading ? "Authenticating..." : "Sign In"}
             {!isLoading && (
