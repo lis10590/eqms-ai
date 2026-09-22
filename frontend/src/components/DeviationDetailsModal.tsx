@@ -187,37 +187,41 @@ export default function DeviationDetailsModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 transition-opacity">
       {/* Floating Glass Container */}
       <div className="bg-theme-card/95 backdrop-blur-2xl rounded-3xl shadow-2xl border border-theme-border/50 w-full max-w-4xl overflow-hidden max-h-[90vh] flex flex-col transform transition-all duration-300">
-        {/* Header */}
-        <div className="bg-theme-body/50 border-b border-theme-border/50 px-8 py-6 flex justify-between items-center shrink-0">
-          <div className="flex items-center gap-4">
-            <h2 className="text-2xl font-extrabold text-theme-text tracking-tight flex items-center gap-2">
-              Deviation Details
+        {/* Header (Responsive) */}
+        <div className="bg-theme-body/50 border-b border-theme-border/50 px-4 sm:px-8 py-4 sm:py-6 flex justify-between items-start shrink-0">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+            <div className="flex items-center gap-2">
+              <h2 className="text-xl sm:text-2xl font-extrabold text-theme-text tracking-tight flex items-center">
+                Deviation Details
+              </h2>
               {deviation.id && (
-                <span className="text-theme-muted font-medium text-lg">
+                <span className="text-theme-muted font-medium text-base sm:text-lg">
                   (#{deviation.id})
                 </span>
               )}
-            </h2>
-            <span
-              className={`px-3 py-1 text-xs font-bold rounded-full border shadow-sm ${
-                currentStatus === "Completed"
-                  ? "bg-green-500/10 text-green-600 border-green-500/20"
-                  : currentStatus === "Under Investigation"
-                    ? "bg-red-500/10 text-red-500 border-red-500/20 animate-pulse"
-                    : "bg-amber-500/10 text-amber-600 border-amber-500/20"
-              }`}
-            >
-              {currentStatus}
-            </span>
+            </div>
+            <div>
+              <span
+                className={`px-3 py-1 text-xs font-bold rounded-full border shadow-sm inline-block ${
+                  currentStatus === "Completed"
+                    ? "bg-green-500/10 text-green-600 border-green-500/20"
+                    : currentStatus === "Under Investigation"
+                      ? "bg-red-500/10 text-red-500 border-red-500/20 animate-pulse"
+                      : "bg-amber-500/10 text-amber-600 border-amber-500/20"
+                }`}
+              >
+                {currentStatus}
+              </span>
+            </div>
           </div>
 
-          <div className="flex items-center space-x-4">
+          <div className="flex flex-col-reverse sm:flex-row items-end sm:items-center gap-3 shrink-0 ml-2">
             {!isEditing &&
               activeTab === "overview" &&
               currentStatus !== "Completed" && (
                 <button
                   onClick={() => setIsEditing(true)}
-                  className="text-sm bg-theme-primary/10 text-theme-primary px-4 py-2 rounded-xl hover:bg-theme-primary/20 font-bold transition-colors shadow-sm"
+                  className="text-xs sm:text-sm bg-theme-primary/10 text-theme-primary px-3 sm:px-4 py-2 rounded-xl hover:bg-theme-primary/20 font-bold transition-colors shadow-sm whitespace-nowrap"
                 >
                   Edit Details
                 </button>
@@ -243,12 +247,12 @@ export default function DeviationDetailsModal({
           </div>
         </div>
 
-        {/* Pill Tabs */}
-        <div className="px-8 pt-6 pb-2 shrink-0 border-b border-theme-border/30">
+        {/* Pill Tabs (Responsive Scrolling) */}
+        <div className="px-4 sm:px-8 pt-4 sm:pt-6 pb-2 shrink-0 border-b border-theme-border/30 overflow-x-auto">
           <div className="flex space-x-2 bg-theme-body/50 p-1.5 rounded-2xl w-max border border-theme-border/50 shadow-inner">
             <button
               onClick={() => setActiveTab("overview")}
-              className={`py-2 px-6 rounded-xl font-bold text-sm transition-all duration-300 ${
+              className={`py-2 px-4 sm:px-6 rounded-xl font-bold text-xs sm:text-sm transition-all duration-300 ${
                 activeTab === "overview"
                   ? "bg-theme-card shadow-sm text-theme-text"
                   : "text-theme-muted hover:text-theme-text"
@@ -258,7 +262,7 @@ export default function DeviationDetailsModal({
             </button>
             <button
               onClick={() => setActiveTab("investigation")}
-              className={`py-2 px-6 rounded-xl font-bold text-sm transition-all duration-300 flex items-center gap-2 ${
+              className={`py-2 px-4 sm:px-6 rounded-xl font-bold text-xs sm:text-sm transition-all duration-300 flex items-center gap-2 ${
                 activeTab === "investigation"
                   ? "bg-theme-card shadow-sm text-theme-text"
                   : "text-theme-muted hover:text-theme-text"
@@ -272,8 +276,8 @@ export default function DeviationDetailsModal({
           </div>
         </div>
 
-        {/* Body - Scrollable */}
-        <div className="p-8 overflow-y-auto flex-1">
+        {/* Body - Scrollable (Responsive Padding) */}
+        <div className="p-4 sm:p-8 overflow-y-auto flex-1">
           {/* ========================================== */}
           {/* TAB 1: OVERVIEW */}
           {/* ========================================== */}
@@ -517,7 +521,7 @@ export default function DeviationDetailsModal({
                         type="button"
                         onClick={handleAIGenerateInvestigation}
                         disabled={isGeneratingAI}
-                        className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-4 py-2.5 rounded-xl font-bold text-xs shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5 flex items-center gap-2 disabled:opacity-50"
+                        className="bg-linear-to-r from-purple-600 to-indigo-600 text-white px-4 py-2.5 rounded-xl font-bold text-xs shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5 flex items-center gap-2 disabled:opacity-50"
                       >
                         {isGeneratingAI ? (
                           <>

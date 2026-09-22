@@ -251,27 +251,105 @@ export default function CalibrationDashboard() {
             </form>
           )}
 
-          {/* Redesigned Minimalist Table */}
-          <div className="overflow-x-auto p-4 sm:p-8">
+          {/* ========================================== */}
+          {/* MOBILE CARD VIEW (Hidden on md and larger) */}
+          {/* ========================================== */}
+          <div className="grid grid-cols-1 gap-4 p-4 md:hidden">
+            {equipmentList.length === 0 ? (
+              <div className="py-12 text-center text-theme-muted font-medium flex flex-col items-center gap-3">
+                <svg
+                  className="w-10 h-10 opacity-50"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={1}
+                    d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"
+                  />
+                </svg>
+                No equipment registered yet.
+              </div>
+            ) : (
+              equipmentList.map((eq) => (
+                <div
+                  key={eq.id}
+                  className="bg-theme-body/30 p-5 rounded-2xl border border-theme-border/50 shadow-sm flex flex-col gap-3"
+                >
+                  <div className="flex justify-between items-start">
+                    <span className="font-extrabold text-theme-text text-lg">
+                      {eq.name}
+                    </span>
+                    {getCalibrationStatusUI(eq.next_calibration_date)}
+                  </div>
+
+                  <div className="flex justify-between items-center bg-theme-card p-3 rounded-xl border border-theme-border/50">
+                    <div className="flex flex-col">
+                      <span className="text-[10px] uppercase font-bold text-theme-muted tracking-wider">
+                        S/N
+                      </span>
+                      <span className="font-mono text-xs font-bold text-theme-text">
+                        {eq.serial_number}
+                      </span>
+                    </div>
+                    <div className="flex flex-col items-end">
+                      <span className="text-[10px] uppercase font-bold text-theme-muted tracking-wider">
+                        Location
+                      </span>
+                      <span className="text-sm font-medium text-theme-text">
+                        {eq.location}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-between items-center text-xs pt-2 border-t border-theme-border/30">
+                    <div className="flex flex-col">
+                      <span className="text-theme-muted font-bold mb-0.5">
+                        Last Calibrated
+                      </span>
+                      <span className="text-theme-text">
+                        {eq.last_calibration_date}
+                      </span>
+                    </div>
+                    <div className="flex flex-col items-end">
+                      <span className="text-theme-muted font-bold mb-0.5">
+                        Next Due
+                      </span>
+                      <span className="text-theme-text font-bold">
+                        {eq.next_calibration_date}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+
+          {/* ========================================== */}
+          {/* DESKTOP TABLE VIEW (Hidden on mobile)      */}
+          {/* ========================================== */}
+          <div className="hidden md:block overflow-x-auto p-4 sm:p-8">
             <table className="min-w-full text-sm text-left border-collapse">
               <thead>
                 <tr className="border-b-2 border-theme-border/50 text-theme-muted">
-                  <th className="pb-4 font-bold uppercase tracking-wider pl-4">
+                  <th className="pb-4 font-bold uppercase tracking-wider pl-4 whitespace-nowrap">
                     Equipment Name
                   </th>
-                  <th className="pb-4 font-bold uppercase tracking-wider">
+                  <th className="pb-4 font-bold uppercase tracking-wider whitespace-nowrap pr-4">
                     S/N
                   </th>
-                  <th className="pb-4 font-bold uppercase tracking-wider">
+                  <th className="pb-4 font-bold uppercase tracking-wider whitespace-nowrap pr-4">
                     Location
                   </th>
-                  <th className="pb-4 font-bold uppercase tracking-wider">
+                  <th className="pb-4 font-bold uppercase tracking-wider whitespace-nowrap pr-4">
                     Last Cal
                   </th>
-                  <th className="pb-4 font-bold uppercase tracking-wider">
+                  <th className="pb-4 font-bold uppercase tracking-wider whitespace-nowrap pr-4">
                     Next Cal
                   </th>
-                  <th className="pb-4 font-bold uppercase tracking-wider">
+                  <th className="pb-4 font-bold uppercase tracking-wider whitespace-nowrap pr-4">
                     Status
                   </th>
                 </tr>
@@ -283,22 +361,7 @@ export default function CalibrationDashboard() {
                       colSpan={6}
                       className="py-12 text-center text-theme-muted font-medium"
                     >
-                      <div className="flex flex-col items-center justify-center gap-3">
-                        <svg
-                          className="w-12 h-12 opacity-50"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={1}
-                            d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"
-                          />
-                        </svg>
-                        No equipment registered yet.
-                      </div>
+                      No equipment registered yet.
                     </td>
                   </tr>
                 ) : (
@@ -307,24 +370,24 @@ export default function CalibrationDashboard() {
                       key={eq.id}
                       className="hover:bg-theme-body/50 transition-colors group"
                     >
-                      <td className="py-5 pl-4 font-bold text-theme-text">
+                      <td className="py-5 pl-4 font-bold text-theme-text whitespace-nowrap">
                         {eq.name}
                       </td>
-                      <td className="py-5">
+                      <td className="py-5 whitespace-nowrap pr-4">
                         <span className="bg-theme-body px-2 py-1 rounded-lg border border-theme-border/50 font-mono text-xs text-theme-text shadow-sm">
                           {eq.serial_number}
                         </span>
                       </td>
-                      <td className="py-5 text-theme-muted font-medium">
+                      <td className="py-5 text-theme-muted font-medium whitespace-nowrap pr-4">
                         {eq.location}
                       </td>
-                      <td className="py-5 text-theme-muted">
+                      <td className="py-5 text-theme-muted whitespace-nowrap pr-4">
                         {eq.last_calibration_date}
                       </td>
-                      <td className="py-5 text-theme-text font-bold">
+                      <td className="py-5 text-theme-text font-bold whitespace-nowrap pr-4">
                         {eq.next_calibration_date}
                       </td>
-                      <td className="py-5">
+                      <td className="py-5 whitespace-nowrap pr-4">
                         {getCalibrationStatusUI(eq.next_calibration_date)}
                       </td>
                     </tr>

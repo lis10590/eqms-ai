@@ -105,26 +105,107 @@ export default function Dashboard() {
             </button>
           </div>
 
-          <div className="overflow-x-auto p-4 sm:p-8">
+          {/* ========================================== */}
+          {/* MOBILE CARD LAYOUT (Hidden on Desktop)     */}
+          {/* ========================================== */}
+          <div className="grid grid-cols-1 gap-4 p-4 sm:p-8 md:hidden">
+            {deviations.length === 0 ? (
+              <div className="py-12 text-center text-theme-muted font-medium flex flex-col items-center gap-3">
+                <svg
+                  className="w-10 h-10 opacity-50"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={1}
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                  />
+                </svg>
+                No active deviations found.
+              </div>
+            ) : (
+              deviations.map((dev: any, index: number) => (
+                <div
+                  key={dev.id || index}
+                  onClick={() => handleRowClick(dev)}
+                  className="bg-theme-body/30 p-5 rounded-2xl border border-theme-border/50 shadow-sm cursor-pointer hover:bg-theme-card transition-colors flex flex-col gap-4"
+                >
+                  {/* Top Row: ID & Status */}
+                  <div className="flex justify-between items-start">
+                    <span className="bg-theme-card px-2 py-1 rounded-lg border border-theme-border/50 font-mono text-xs font-bold text-theme-text shadow-sm">
+                      DEV-{dev.id}
+                    </span>
+                    {renderStatusBadge(dev.status || "Open")}
+                  </div>
+
+                  {/* Middle Row: Category & RPN */}
+                  <div className="flex justify-between items-center">
+                    <span className="text-lg font-extrabold text-theme-text">
+                      {dev.category || dev.root_cause_category}
+                    </span>
+                    <div className="flex flex-col items-end">
+                      <span className="text-[10px] uppercase font-bold text-theme-muted tracking-wider mb-0.5">
+                        RPN
+                      </span>
+                      <span
+                        className={`px-3 py-1 inline-flex text-xs font-bold rounded-full border shadow-sm ${dev.rpn > 50 ? "bg-red-500/10 text-red-600 border-red-500/20" : "bg-green-500/10 text-green-600 border-green-500/20"}`}
+                      >
+                        {dev.rpn}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Bottom Row: Submitter & Date */}
+                  <div className="flex justify-between items-center text-sm text-theme-muted font-medium pt-4 border-t border-theme-border/30">
+                    <span className="flex items-center gap-1.5">
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                        />
+                      </svg>
+                      {dev.submitter_id}
+                    </span>
+                    <span>{formatDateTime(dev.created_at)}</span>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+
+          {/* ========================================== */}
+          {/* DESKTOP TABLE LAYOUT (Hidden on Mobile)    */}
+          {/* ========================================== */}
+          <div className="hidden md:block overflow-x-auto p-4 sm:p-8">
             <table className="min-w-full text-sm text-left border-collapse">
               <thead>
                 <tr className="border-b-2 border-theme-border/50 text-theme-muted">
-                  <th className="pb-4 font-bold uppercase tracking-wider pl-4">
+                  <th className="pb-4 font-bold uppercase tracking-wider pl-4 whitespace-nowrap">
                     ID
                   </th>
-                  <th className="pb-4 font-bold uppercase tracking-wider">
+                  <th className="pb-4 font-bold uppercase tracking-wider whitespace-nowrap pr-4">
                     Submitter
                   </th>
-                  <th className="pb-4 font-bold uppercase tracking-wider">
+                  <th className="pb-4 font-bold uppercase tracking-wider whitespace-nowrap pr-4">
                     Category
                   </th>
-                  <th className="pb-4 font-bold uppercase tracking-wider">
+                  <th className="pb-4 font-bold uppercase tracking-wider whitespace-nowrap pr-4">
                     RPN
                   </th>
-                  <th className="pb-4 font-bold uppercase tracking-wider">
+                  <th className="pb-4 font-bold uppercase tracking-wider whitespace-nowrap pr-4">
                     Status
                   </th>
-                  <th className="pb-4 font-bold uppercase tracking-wider">
+                  <th className="pb-4 font-bold uppercase tracking-wider whitespace-nowrap pr-4">
                     Date
                   </th>
                 </tr>
@@ -136,22 +217,7 @@ export default function Dashboard() {
                       colSpan={6}
                       className="py-12 text-center text-theme-muted font-medium"
                     >
-                      <div className="flex flex-col items-center justify-center gap-3">
-                        <svg
-                          className="w-12 h-12 opacity-50"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={1}
-                            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                          />
-                        </svg>
-                        No active deviations found. Facility is fully compliant.
-                      </div>
+                      No active deviations found. Facility is fully compliant.
                     </td>
                   </tr>
                 ) : (
@@ -161,32 +227,28 @@ export default function Dashboard() {
                       className="hover:bg-theme-body/50 transition-colors cursor-pointer group"
                       onClick={() => handleRowClick(dev)}
                     >
-                      <td className="py-5 pl-4">
+                      <td className="py-5 pl-4 whitespace-nowrap">
                         <span className="bg-theme-body px-2 py-1 rounded-lg border border-theme-border/50 font-mono text-xs font-bold text-theme-text shadow-sm group-hover:bg-theme-card transition-colors">
                           DEV-{dev.id}
                         </span>
                       </td>
-                      <td className="py-5 font-medium text-theme-text">
+                      <td className="py-5 font-medium text-theme-text whitespace-nowrap pr-4">
                         {dev.submitter_id}
                       </td>
-                      <td className="py-5 text-theme-muted font-medium">
+                      <td className="py-5 text-theme-muted font-medium whitespace-nowrap pr-4">
                         {dev.category || dev.root_cause_category}
                       </td>
-                      <td className="py-5">
+                      <td className="py-5 whitespace-nowrap pr-4">
                         <span
-                          className={`px-3 py-1 inline-flex text-xs font-bold rounded-full border shadow-sm ${
-                            dev.rpn > 50
-                              ? "bg-red-500/10 text-red-600 border-red-500/20"
-                              : "bg-green-500/10 text-green-600 border-green-500/20"
-                          }`}
+                          className={`px-3 py-1 inline-flex text-xs font-bold rounded-full border shadow-sm ${dev.rpn > 50 ? "bg-red-500/10 text-red-600 border-red-500/20" : "bg-green-500/10 text-green-600 border-green-500/20"}`}
                         >
                           {dev.rpn}
                         </span>
                       </td>
-                      <td className="py-5">
+                      <td className="py-5 whitespace-nowrap pr-4">
                         {renderStatusBadge(dev.status || "Open")}
                       </td>
-                      <td className="py-5 text-theme-muted font-medium">
+                      <td className="py-5 text-theme-muted font-medium whitespace-nowrap pr-4">
                         {formatDateTime(dev.created_at)}
                       </td>
                     </tr>

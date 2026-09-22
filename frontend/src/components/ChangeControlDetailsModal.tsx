@@ -18,12 +18,10 @@ export default function ChangeControlDetailsModal({
 }: ChangeControlDetailsModalProps) {
   const router = useRouter();
 
-  // Tab & Core State
   const [activeTab, setActiveTab] = useState<"overview" | "tasks">("overview");
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Edit Form State
   const [editData, setEditData] = useState({
     title: "",
     current_state: "",
@@ -48,7 +46,6 @@ export default function ChangeControlDetailsModal({
 
   const currentStatus = changeControl.status || "Under Review";
 
-  // --- API: Update Change Control ---
   const handleUpdate = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
@@ -83,7 +80,6 @@ export default function ChangeControlDetailsModal({
     }
   };
 
-  // Helper to safely parse JSON impact areas and tasks if stored as strings
   const impactAreas =
     typeof changeControl.impact_areas === "string"
       ? JSON.parse(changeControl.impact_areas || "[]")
@@ -96,39 +92,42 @@ export default function ChangeControlDetailsModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 transition-opacity">
-      {/* Floating Glass Container */}
       <div className="bg-theme-card/95 backdrop-blur-2xl rounded-3xl shadow-2xl border border-theme-border/50 w-full max-w-4xl overflow-hidden max-h-[90vh] flex flex-col transform transition-all duration-300">
-        {/* Header */}
-        <div className="bg-theme-body/50 border-b border-theme-border/50 px-8 py-6 flex justify-between items-center shrink-0">
-          <div className="flex items-center gap-4">
-            <h2 className="text-2xl font-extrabold text-theme-text tracking-tight flex items-center gap-2">
-              Change Control
+        {/* Header - Flexible Stack on Mobile */}
+        <div className="bg-theme-body/50 border-b border-theme-border/50 px-4 sm:px-8 py-4 sm:py-6 flex justify-between items-start shrink-0">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+            <div className="flex items-center gap-2">
+              <h2 className="text-xl sm:text-2xl font-extrabold text-theme-text tracking-tight flex items-center">
+                Change Control
+              </h2>
               {changeControl.id && (
-                <span className="text-theme-muted font-medium text-lg">
+                <span className="text-theme-muted font-medium text-base sm:text-lg">
                   (CC-{changeControl.id})
                 </span>
               )}
-            </h2>
-            <span
-              className={`px-3 py-1 text-xs font-bold rounded-full border shadow-sm ${
-                currentStatus === "Approved"
-                  ? "bg-green-500/10 text-green-600 border-green-500/20"
-                  : currentStatus === "Closed"
-                    ? "bg-theme-body text-theme-muted border-theme-border/50"
-                    : "bg-amber-500/10 text-amber-600 border-amber-500/20"
-              }`}
-            >
-              {currentStatus}
-            </span>
+            </div>
+            <div>
+              <span
+                className={`px-3 py-1 text-xs font-bold rounded-full border shadow-sm inline-block ${
+                  currentStatus === "Approved"
+                    ? "bg-green-500/10 text-green-600 border-green-500/20"
+                    : currentStatus === "Closed"
+                      ? "bg-theme-body text-theme-muted border-theme-border/50"
+                      : "bg-amber-500/10 text-amber-600 border-amber-500/20"
+                }`}
+              >
+                {currentStatus}
+              </span>
+            </div>
           </div>
 
-          <div className="flex items-center space-x-4">
+          <div className="flex flex-col-reverse sm:flex-row items-end sm:items-center gap-3 shrink-0 ml-2">
             {!isEditing &&
               activeTab === "overview" &&
               currentStatus !== "Closed" && (
                 <button
                   onClick={() => setIsEditing(true)}
-                  className="text-sm bg-theme-primary/10 text-theme-primary px-4 py-2 rounded-xl hover:bg-theme-primary/20 font-bold transition-colors shadow-sm"
+                  className="text-xs sm:text-sm bg-theme-primary/10 text-theme-primary px-3 sm:px-4 py-2 rounded-xl hover:bg-theme-primary/20 font-bold transition-colors shadow-sm whitespace-nowrap"
                 >
                   Edit Details
                 </button>
@@ -154,12 +153,12 @@ export default function ChangeControlDetailsModal({
           </div>
         </div>
 
-        {/* Pill Tabs */}
-        <div className="px-8 pt-6 pb-2 shrink-0 border-b border-theme-border/30">
+        {/* Pill Tabs - Horizontally scrollable */}
+        <div className="px-4 sm:px-8 pt-4 sm:pt-6 pb-2 shrink-0 border-b border-theme-border/30 overflow-x-auto">
           <div className="flex space-x-2 bg-theme-body/50 p-1.5 rounded-2xl w-max border border-theme-border/50 shadow-inner">
             <button
               onClick={() => setActiveTab("overview")}
-              className={`py-2 px-6 rounded-xl font-bold text-sm transition-all duration-300 ${
+              className={`py-2 px-4 sm:px-6 rounded-xl font-bold text-xs sm:text-sm transition-all duration-300 ${
                 activeTab === "overview"
                   ? "bg-theme-card shadow-sm text-theme-text"
                   : "text-theme-muted hover:text-theme-text"
@@ -169,7 +168,7 @@ export default function ChangeControlDetailsModal({
             </button>
             <button
               onClick={() => setActiveTab("tasks")}
-              className={`py-2 px-6 rounded-xl font-bold text-sm transition-all duration-300 flex items-center gap-2 ${
+              className={`py-2 px-4 sm:px-6 rounded-xl font-bold text-xs sm:text-sm transition-all duration-300 flex items-center gap-2 ${
                 activeTab === "tasks"
                   ? "bg-theme-card shadow-sm text-theme-text"
                   : "text-theme-muted hover:text-theme-text"
@@ -185,15 +184,13 @@ export default function ChangeControlDetailsModal({
           </div>
         </div>
 
-        {/* Body - Scrollable */}
-        <div className="p-8 overflow-y-auto flex-1">
-          {/* ========================================== */}
+        {/* Body Container */}
+        <div className="p-4 sm:p-8 overflow-y-auto flex-1">
           {/* TAB 1: OVERVIEW */}
-          {/* ========================================== */}
           {activeTab === "overview" && (
-            <div className="space-y-8 animate-fadeIn">
-              {/* AI Assessment Readout */}
-              <div className="bg-theme-accent/5 p-6 rounded-3xl border border-theme-accent/20 shadow-sm relative overflow-hidden">
+            <div className="space-y-6 sm:space-y-8 animate-fadeIn">
+              {/* AI Assessment Box */}
+              <div className="bg-theme-accent/5 p-5 sm:p-6 rounded-3xl border border-theme-accent/20 shadow-sm relative overflow-hidden">
                 <div className="absolute top-0 right-0 p-4 opacity-10">
                   <svg
                     className="w-24 h-24 text-theme-accent"
@@ -204,18 +201,18 @@ export default function ChangeControlDetailsModal({
                   </svg>
                 </div>
 
-                <h3 className="font-extrabold text-theme-accent text-lg flex items-center gap-2 mb-4 relative z-10">
+                <h3 className="font-extrabold text-theme-accent text-base sm:text-lg flex items-center gap-2 mb-4 relative z-10">
                   <div className="w-2 h-2 rounded-full bg-theme-accent animate-pulse"></div>
                   AI Risk & Impact Assessment
                 </h3>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm relative z-10">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 text-sm relative z-10">
                   <div className="bg-theme-card/80 backdrop-blur-sm p-4 rounded-2xl border border-theme-border/50 shadow-sm">
                     <span className="block font-bold text-theme-muted uppercase tracking-wide text-xs mb-1">
                       Classification
                     </span>
                     <span
-                      className={`font-extrabold text-lg ${
+                      className={`font-extrabold text-base sm:text-lg ${
                         changeControl.classification === "Critical"
                           ? "text-red-500"
                           : changeControl.classification === "Major"
@@ -251,7 +248,7 @@ export default function ChangeControlDetailsModal({
                     <span className="block font-bold text-theme-muted uppercase tracking-wide text-xs mb-1">
                       Classification Rationale
                     </span>
-                    <span className="text-theme-text font-medium text-base leading-relaxed">
+                    <span className="text-theme-text font-medium text-sm sm:text-base leading-relaxed">
                       {changeControl.classification_rationale ||
                         "No rationale provided."}
                     </span>
@@ -263,7 +260,7 @@ export default function ChangeControlDetailsModal({
               {isEditing ? (
                 <form
                   onSubmit={handleUpdate}
-                  className="space-y-5 bg-theme-body/30 p-6 rounded-3xl border border-theme-border/50"
+                  className="space-y-4 sm:space-y-5 bg-theme-body/30 p-4 sm:p-6 rounded-3xl border border-theme-border/50"
                 >
                   <div className="space-y-1">
                     <label className="block text-sm font-bold text-theme-muted ml-1">
@@ -335,62 +332,61 @@ export default function ChangeControlDetailsModal({
                     <button
                       type="button"
                       onClick={() => setIsEditing(false)}
-                      className="px-6 py-3 border border-theme-border rounded-2xl text-sm font-bold text-theme-text hover:bg-theme-card transition-colors"
+                      className="px-5 sm:px-6 py-2.5 sm:py-3 border border-theme-border rounded-2xl text-xs sm:text-sm font-bold text-theme-text hover:bg-theme-card transition-colors"
                     >
                       Cancel
                     </button>
                     <button
                       type="submit"
                       disabled={isLoading}
-                      className="bg-theme-primary text-white px-6 py-3 rounded-2xl hover:bg-theme-primaryHover disabled:opacity-50 font-bold shadow-md hover:shadow-lg transition-all"
+                      className="bg-theme-primary text-white px-5 sm:px-6 py-2.5 sm:py-3 rounded-2xl hover:bg-theme-primaryHover disabled:opacity-50 font-bold shadow-md hover:shadow-lg transition-all text-xs sm:text-sm"
                     >
                       {isLoading ? "Saving..." : "Save Changes"}
                     </button>
                   </div>
                 </form>
               ) : (
-                <div className="space-y-6 px-2">
+                <div className="space-y-6 px-1 sm:px-2">
                   <div>
-                    <span className="block text-sm font-bold text-theme-muted mb-1 uppercase tracking-wide">
+                    <span className="block text-xs sm:text-sm font-bold text-theme-muted mb-1 uppercase tracking-wide">
                       Title
                     </span>
-                    <p className="text-theme-text font-bold text-xl">
+                    <p className="text-theme-text font-bold text-lg sm:text-xl">
                       {changeControl.title}
                     </p>
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                     <div>
-                      <span className="block text-sm font-bold text-theme-muted mb-2 uppercase tracking-wide">
+                      <span className="block text-xs sm:text-sm font-bold text-theme-muted mb-2 uppercase tracking-wide">
                         Current State
                       </span>
-                      <p className="text-theme-text bg-theme-body/50 p-4 rounded-2xl border border-theme-border/50 whitespace-pre-wrap leading-relaxed shadow-inner">
+                      <p className="text-theme-text bg-theme-body/50 p-4 rounded-2xl border border-theme-border/50 whitespace-pre-wrap leading-relaxed shadow-inner text-sm sm:text-base">
                         {changeControl.current_state}
                       </p>
                     </div>
                     <div>
-                      <span className="block text-sm font-bold text-theme-muted mb-2 uppercase tracking-wide">
+                      <span className="block text-xs sm:text-sm font-bold text-theme-muted mb-2 uppercase tracking-wide">
                         Proposed State
                       </span>
-                      <p className="text-theme-text bg-theme-body/50 p-4 rounded-2xl border border-theme-border/50 whitespace-pre-wrap leading-relaxed shadow-inner">
+                      <p className="text-theme-text bg-theme-body/50 p-4 rounded-2xl border border-theme-border/50 whitespace-pre-wrap leading-relaxed shadow-inner text-sm sm:text-base">
                         {changeControl.proposed_state}
                       </p>
                     </div>
                   </div>
                   <div>
-                    <span className="block text-sm font-bold text-theme-muted mb-2 uppercase tracking-wide">
+                    <span className="block text-xs sm:text-sm font-bold text-theme-muted mb-2 uppercase tracking-wide">
                       Justification
                     </span>
-                    <p className="text-theme-text bg-theme-body/50 p-4 rounded-2xl border border-theme-border/50 whitespace-pre-wrap leading-relaxed shadow-inner">
+                    <p className="text-theme-text bg-theme-body/50 p-4 rounded-2xl border border-theme-border/50 whitespace-pre-wrap leading-relaxed shadow-inner text-sm sm:text-base">
                       {changeControl.justification}
                     </p>
                   </div>
 
-                  {/* AI Enhanced Description */}
                   {changeControl.enhanced_description && (
-                    <div className="mt-8 border-t border-theme-border/50 pt-6">
-                      <span className="text-sm font-bold text-theme-accent mb-2 uppercase tracking-wide flex items-center gap-2">
+                    <div className="mt-6 sm:mt-8 border-t border-theme-border/50 pt-6">
+                      <span className="text-xs sm:text-sm font-bold text-theme-accent mb-2 uppercase tracking-wide flex items-center gap-2">
                         <svg
-                          className="w-4 h-4"
+                          className="w-4 h-4 shrink-0"
                           fill="currentColor"
                           viewBox="0 0 20 20"
                         >
@@ -403,7 +399,7 @@ export default function ChangeControlDetailsModal({
                         </svg>
                         AI Enhanced Technical Summary
                       </span>
-                      <p className="text-theme-text bg-theme-body/50 p-5 rounded-2xl border border-theme-border/50 whitespace-pre-wrap leading-relaxed shadow-inner italic">
+                      <p className="text-theme-text bg-theme-body/50 p-4 sm:p-5 rounded-2xl border border-theme-border/50 whitespace-pre-wrap leading-relaxed shadow-inner italic text-sm sm:text-base">
                         {changeControl.enhanced_description}
                       </p>
                     </div>
@@ -413,18 +409,16 @@ export default function ChangeControlDetailsModal({
             </div>
           )}
 
-          {/* ========================================== */}
           {/* TAB 2: EXECUTION TASKS */}
-          {/* ========================================== */}
           {activeTab === "tasks" && (
-            <div className="space-y-6 animate-fadeIn">
+            <div className="space-y-4 sm:space-y-6 animate-fadeIn">
               <div className="bg-theme-body/30 p-4 rounded-2xl border border-theme-border/50">
                 <p className="font-bold text-sm text-theme-text">
                   Implementation Action Plan
                 </p>
                 <p className="text-xs text-theme-muted mt-0.5">
-                  The following tasks have been identified by the AI assessment
-                  to safely execute this change.
+                  Tasks identified by the AI assessment to safely execute this
+                  change.
                 </p>
               </div>
 
@@ -433,22 +427,22 @@ export default function ChangeControlDetailsModal({
                   No tasks generated for this Change Control.
                 </div>
               ) : (
-                <div className="grid gap-4">
+                <div className="grid gap-3 sm:gap-4">
                   {suggestedTasks.map((task: any, idx: number) => (
                     <div
                       key={idx}
-                      className="flex items-start gap-4 p-5 bg-theme-card border border-theme-border/50 rounded-2xl shadow-sm hover:border-theme-accent/50 transition-colors group"
+                      className="flex items-start gap-3 sm:gap-4 p-4 sm:p-5 bg-theme-card border border-theme-border/50 rounded-2xl shadow-sm hover:border-theme-accent/50 transition-colors group"
                     >
                       <div className="shrink-0 mt-0.5">
-                        <div className="w-6 h-6 rounded-full border-2 border-theme-muted flex items-center justify-center group-hover:border-theme-accent transition-colors">
-                          <span className="w-2.5 h-2.5 rounded-full bg-transparent group-hover:bg-theme-accent transition-colors"></span>
+                        <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full border-2 border-theme-muted flex items-center justify-center group-hover:border-theme-accent transition-colors">
+                          <span className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-transparent group-hover:bg-theme-accent transition-colors"></span>
                         </div>
                       </div>
                       <div className="flex-1">
-                        <span className="inline-block px-2.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-theme-body text-theme-muted mb-2 border border-theme-border/50">
+                        <span className="inline-block px-2.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-theme-body text-theme-muted mb-1.5 border border-theme-border/50">
                           {task.Domain}
                         </span>
-                        <p className="text-theme-text font-medium text-sm leading-relaxed">
+                        <p className="text-theme-text font-medium text-xs sm:text-sm leading-relaxed">
                           {task.Task_Description}
                         </p>
                       </div>

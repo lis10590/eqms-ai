@@ -267,27 +267,105 @@ export default function InventoryDashboard() {
             </form>
           )}
 
-          {/* Redesigned Minimalist Table */}
-          <div className="overflow-x-auto p-4 sm:p-8">
+          {/* ========================================== */}
+          {/* MOBILE CARD VIEW (Hidden on md and larger) */}
+          {/* ========================================== */}
+          <div className="grid grid-cols-1 gap-4 p-4 md:hidden">
+            {inventory.length === 0 ? (
+              <div className="py-12 text-center text-theme-muted font-medium flex flex-col items-center gap-3">
+                <svg
+                  className="w-10 h-10 opacity-50"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={1}
+                    d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
+                  />
+                </svg>
+                Warehouse is empty. Add materials to begin tracking.
+              </div>
+            ) : (
+              inventory.map((item) => (
+                <div
+                  key={item.id}
+                  className="bg-theme-body/30 p-5 rounded-2xl border border-theme-border/50 shadow-sm flex flex-col gap-3"
+                >
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h3 className="font-extrabold text-theme-text text-lg leading-tight">
+                        {item.name}
+                      </h3>
+                      <p className="text-xs text-theme-muted font-bold uppercase tracking-wider mt-1">
+                        {item.category}
+                      </p>
+                    </div>
+                    <span
+                      className={`px-3 py-1 inline-flex text-xs font-bold rounded-full border shadow-sm ${item.status === "Released" ? "bg-green-500/10 text-green-600 border-green-500/20" : "bg-amber-500/10 text-amber-600 border-amber-500/20"}`}
+                    >
+                      {item.status}
+                    </span>
+                  </div>
+
+                  <div className="flex justify-between items-center bg-theme-card p-4 rounded-xl border border-theme-border/50 my-1">
+                    <div className="flex flex-col">
+                      <span className="text-[10px] uppercase font-bold text-theme-muted tracking-wider">
+                        Lot #
+                      </span>
+                      <span className="font-mono text-sm font-bold text-theme-text">
+                        {item.lot_number}
+                      </span>
+                    </div>
+                    <div className="flex flex-col items-end">
+                      <span className="text-[10px] uppercase font-bold text-theme-muted tracking-wider">
+                        Quantity
+                      </span>
+                      <span className="font-bold text-lg text-theme-text">
+                        {item.quantity}{" "}
+                        <span className="text-sm font-medium text-theme-muted">
+                          {item.unit}
+                        </span>
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-between items-center pt-2 border-t border-theme-border/30">
+                    <span className="text-xs font-bold text-theme-muted">
+                      Expiration:
+                    </span>
+                    {getExpirationStatusUI(item.expiration_date)}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+
+          {/* ========================================== */}
+          {/* DESKTOP TABLE VIEW (Hidden on mobile)      */}
+          {/* ========================================== */}
+          <div className="hidden md:block overflow-x-auto p-4 sm:p-8">
             <table className="min-w-full text-sm text-left border-collapse">
               <thead>
                 <tr className="border-b-2 border-theme-border/50 text-theme-muted">
-                  <th className="pb-4 font-bold uppercase tracking-wider pl-4">
+                  <th className="pb-4 font-bold uppercase tracking-wider pl-4 whitespace-nowrap">
                     Item Name
                   </th>
-                  <th className="pb-4 font-bold uppercase tracking-wider">
+                  <th className="pb-4 font-bold uppercase tracking-wider whitespace-nowrap pr-4">
                     Category
                   </th>
-                  <th className="pb-4 font-bold uppercase tracking-wider">
+                  <th className="pb-4 font-bold uppercase tracking-wider whitespace-nowrap pr-4">
                     Lot #
                   </th>
-                  <th className="pb-4 font-bold uppercase tracking-wider">
+                  <th className="pb-4 font-bold uppercase tracking-wider whitespace-nowrap pr-4">
                     Quantity
                   </th>
-                  <th className="pb-4 font-bold uppercase tracking-wider">
+                  <th className="pb-4 font-bold uppercase tracking-wider whitespace-nowrap pr-4">
                     Expiration
                   </th>
-                  <th className="pb-4 font-bold uppercase tracking-wider">
+                  <th className="pb-4 font-bold uppercase tracking-wider whitespace-nowrap pr-4">
                     Status
                   </th>
                 </tr>
@@ -299,23 +377,7 @@ export default function InventoryDashboard() {
                       colSpan={6}
                       className="py-12 text-center text-theme-muted font-medium"
                     >
-                      <div className="flex flex-col items-center justify-center gap-3">
-                        <svg
-                          className="w-12 h-12 opacity-50"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={1}
-                            d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
-                          />
-                        </svg>
-                        Warehouse is completely empty. Add materials to begin
-                        tracking.
-                      </div>
+                      Warehouse is empty.
                     </td>
                   </tr>
                 ) : (
@@ -324,33 +386,29 @@ export default function InventoryDashboard() {
                       key={item.id}
                       className="hover:bg-theme-body/50 transition-colors group"
                     >
-                      <td className="py-5 pl-4 font-bold text-theme-text">
+                      <td className="py-5 pl-4 font-bold text-theme-text whitespace-nowrap">
                         {item.name}
                       </td>
-                      <td className="py-5 text-theme-muted font-medium">
+                      <td className="py-5 text-theme-muted font-medium whitespace-nowrap pr-4">
                         {item.category}
                       </td>
-                      <td className="py-5">
+                      <td className="py-5 whitespace-nowrap pr-4">
                         <span className="bg-theme-body px-2 py-1 rounded-lg border border-theme-border/50 font-mono text-xs text-theme-text shadow-sm">
                           {item.lot_number}
                         </span>
                       </td>
-                      <td className="py-5 font-bold text-lg text-theme-text">
+                      <td className="py-5 font-bold text-lg text-theme-text whitespace-nowrap pr-4">
                         {item.quantity}{" "}
                         <span className="text-theme-muted font-medium text-sm">
                           {item.unit}
                         </span>
                       </td>
-                      <td className="py-5">
+                      <td className="py-5 whitespace-nowrap pr-4">
                         {getExpirationStatusUI(item.expiration_date)}
                       </td>
-                      <td className="py-5">
+                      <td className="py-5 whitespace-nowrap pr-4">
                         <span
-                          className={`px-3 py-1 inline-flex text-xs font-bold rounded-full border shadow-sm ${
-                            item.status === "Released"
-                              ? "bg-green-500/10 text-green-600 border-green-500/20"
-                              : "bg-amber-500/10 text-amber-600 border-amber-500/20"
-                          }`}
+                          className={`px-3 py-1 inline-flex text-xs font-bold rounded-full border shadow-sm ${item.status === "Released" ? "bg-green-500/10 text-green-600 border-green-500/20" : "bg-amber-500/10 text-amber-600 border-amber-500/20"}`}
                         >
                           {item.status}
                         </span>
